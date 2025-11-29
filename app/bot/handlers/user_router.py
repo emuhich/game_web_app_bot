@@ -1,7 +1,7 @@
 from aiogram import Router, F
 from aiogram.filters import CommandStart
 from aiogram.types import Message
-from app.api.dao import UserDAO
+from app.users.dao import UserDAO
 from app.bot.keyboards.kbs import app_keyboard
 from app.bot.utils.utils import greet_user, get_about_us_text
 
@@ -13,16 +13,19 @@ async def cmd_start(message: Message) -> None:
     """
     Обрабатывает команду /start.
     """
-    user = await UserDAO.find_one_or_none(telegram_id=message.from_user.id)
-
-    if not user:
-        await UserDAO.add(
+    existing = await UserDAO.get_by_telegram(message.from_user.id)
+    if existing:
+        is_new_user = False
+        user = existing
+    else:
+        # Создаём пользователя если не найден
+        user = await UserDAO.get_or_create(
             telegram_id=message.from_user.id,
             first_name=message.from_user.first_name,
             username=message.from_user.username
         )
-
-    await greet_user(message, is_new_user=not user)
+        is_new_user = True
+    await greet_user(message, is_new_user=is_new_user)
 
 
 @user_router.message(F.text == '🔙 Назад')

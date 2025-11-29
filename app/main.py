@@ -1,15 +1,24 @@
 import logging
 from contextlib import asynccontextmanager
-from app.bot.create_bot import bot, dp, stop_bot, start_bot
-from app.bot.handlers.user_router import user_router
-from app.bot.handlers.admin_router import admin_router
-from app.config import settings
+
+import aioredis
+import uvicorn
 from aiogram.types import Update
 from fastapi import FastAPI, Request
-from fastapi.staticfiles import StaticFiles
-from app.pages.router import router as router_pages
-from app.api.application_router import router as api_router  # Добавлен импорт API роутера
-from app.database_seed import seed_initial_data  # импорт сидера
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.staticfiles import StaticFiles
+
+from app.admin.views import init_sqladmin
+from app.bot.create_bot import bot, dp, stop_bot, start_bot
+from app.bot.handlers.admin_router import admin_router as admin_router_bot
+from app.bot.handlers.user_router import user_router
+from app.config import settings
+from app.games.honesty.router import router as honesty_router
+from app.games.router import router as games_router
+from app.users.router import router as users_router
+from app.frontend.pages.router import router as router_pages
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -18,18 +27,13 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 async def lifespan(app: FastAPI):
     logging.info("Starting bot setup...")
     dp.include_router(user_router)
-    dp.include_router(admin_router)
+    dp.include_router(admin_router_bot)
     await start_bot()
     webhook_url = settings.get_webhook_url()
     await bot.set_webhook(url=webhook_url,
                           allowed_updates=dp.resolve_used_update_types(),
                           drop_pending_updates=True)
     logging.info(f"Webhook set to {webhook_url}")
-    # Сид данных если пусто
-    try:
-        await seed_initial_data()
-    except Exception as e:
-        logging.error(f"Seed failed: {e}")
     yield
     logging.info("Shutting down bot...")
     await bot.delete_webhook()
@@ -38,11 +42,17 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(SessionMiddleware, secret_key=settings.ADMIN_SECRET)
 
-app.mount('/static', StaticFiles(directory='app/static'), name='static')
+# Статика
+app.mount('/static', StaticFiles(directory='frontend/static'), name='static')
 
+init_sqladmin(app)
+
+app.include_router(users_router)
+app.include_router(games_router)
+app.include_router(honesty_router)
 app.include_router(router_pages)
-app.include_router(api_router)
 
 
 @app.post("/webhook")
@@ -51,3 +61,14 @@ async def webhook(request: Request) -> None:
     update = Update.model_validate(await request.json(), context={"bot": bot})
     await dp.feed_update(bot, update)
     logging.info("Update processed")
+
+
+@app.on_event("startup")
+async def startup():
+    """Подключение к Redis на старте приложения"""
+    redis = aioredis.from_url(settings.REDIS_URL, encoding="utf8", decode_responses=True)
+    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+
+
+if __name__ == "__main__":
+    uvicorn.run("app.main:app", reload=True)

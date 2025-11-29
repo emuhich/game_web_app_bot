@@ -1,78 +1,49 @@
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.future import select
-from app.database import async_session_maker
+from sqlalchemy import select, insert, update, delete
+
+from app.db.database import async_session_maker, Base
 
 
 class BaseDAO:
-    model = None
+    model = type[Base]
 
     @classmethod
-    async def find_one_or_none_by_id(cls, data_id: int):
-        """
-        Асинхронно находит и возвращает один экземпляр модели по указанным критериям или None.
-
-        Аргументы:
-            data_id: Критерии фильтрации в виде идентификатора записи.
-
-        Возвращает:
-            Экземпляр модели или None, если ничего не найдено.
-        """
+    async def get_by_id(cls, model_id):
         async with async_session_maker() as session:
-            query = select(cls.model).filter_by(id=data_id)
+            query = select(cls.model).filter_by(id=model_id)
             result = await session.execute(query)
             return result.scalar_one_or_none()
 
     @classmethod
-    async def find_one_or_none(cls, **filter_by):
-        """
-        Асинхронно находит и возвращает один экземпляр модели по указанным критериям или None.
-
-        Аргументы:
-            **filter_by: Критерии фильтрации в виде именованных параметров.
-
-        Возвращает:
-            Экземпляр модели или None, если ничего не найдено.
-        """
+    async def get_one_or_none(cls, **filters):
         async with async_session_maker() as session:
-            query = select(cls.model).filter_by(**filter_by)
+            query = select(cls.model).filter_by(**filters)
             result = await session.execute(query)
             return result.scalar_one_or_none()
 
     @classmethod
-    async def find_all(cls, **filter_by):
-        """
-        Асинхронно находит и возвращает все экземпляры модели, удовлетворяющие указанным критериям.
-
-        Аргументы:
-            **filter_by: Критерии фильтрации в виде именованных параметров.
-
-        Возвращает:
-            Список экземпляров модели.
-        """
+    async def get_all(cls, **filters):
         async with async_session_maker() as session:
-            query = select(cls.model).filter_by(**filter_by)
+            query = select(cls.model.__table__.columns).filter_by(**filters)
             result = await session.execute(query)
-            return result.scalars().all()
+            return result.mappings().all()
 
     @classmethod
-    async def add(cls, **values):
-        """
-        Асинхронно создает новый экземпляр модели с указанными значениями.
-
-        Аргументы:
-            **values: Именованные параметры для создания нового экземпляра модели.
-
-        Возвращает:
-            Созданный экземпляр модели.
-        """
+    async def create(cls, **kwargs):
         async with async_session_maker() as session:
-            new_instance = cls.model(**values)
-            session.add(new_instance)
-            try:
-                await session.commit()
-                # Обновляем поля (id, defaults) если нужно
-                await session.refresh(new_instance)
-            except SQLAlchemyError as e:
-                await session.rollback()
-                raise e
-            return new_instance
+            query = insert(cls.model).values(**kwargs)
+            await session.execute(query)
+            await session.commit()
+
+    @classmethod
+    async def update(cls, model_id: int, **kwargs):
+        async with async_session_maker() as session:
+            query = update(cls.model).where(cls.model.id == model_id).values(**kwargs)
+            await session.execute(query)
+            await session.commit()
+
+    @classmethod
+    async def delete(cls, model_id: int):
+        async with async_session_maker() as session:
+            query = delete(cls.model).where(cls.model.id == model_id)
+            await session.execute(query)
+            await session.commit()

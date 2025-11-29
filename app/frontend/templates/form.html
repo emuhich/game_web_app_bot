@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Запись{% endblock %}
+
+{% block body_class %}form-page{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="/static/css/form.css">
+{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+  <a href="/app-v-1/static" class="back-btn" aria-label="Назад на главную">← Назад</a>
+  <h1>Запись на услугу</h1>
+  <form id="application-form">
+    <div class="form-grid">
+      <div class="field">
+        <label for="client_name">Имя</label>
+        <input type="text" id="client_name" name="client_name" placeholder="Ваше имя" required>
+      </div>
+      <div class="field">
+        <label for="user_id">Telegram ID (скрыто)</label>
+        <input type="text" id="user_id" name="user_id" placeholder="user id" readonly>
+      </div>
+      <div class="field">
+        <label for="service_id">Услуга</label>
+        <select id="service_id" name="service_id" required></select>
+      </div>
+      <div class="field">
+        <label for="master_id">Мастер</label>
+        <select id="master_id" name="master_id" required></select>
+      </div>
+      <div class="field">
+        <label for="appointment_date">Дата</label>
+        <input type="date" id="appointment_date" name="appointment_date" required>
+      </div>
+      <div class="field">
+        <label for="appointment_time">Время</label>
+        <input type="time" id="appointment_time" name="appointment_time" required>
+      </div>
+      <div class="field full">
+        <label>Пол</label>
+        <div class="inline-radio" id="gender-group">
+          <label><input type="radio" name="gender" value="male"><span>Мужской</span></label>
+          <label><input type="radio" name="gender" value="female"><span>Женский</span></label>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button type="submit" class="submit-btn">Отправить</button>
+    </div>
+    <div class="status-message" id="status"></div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/form.js"></script>
+{% endblock %}

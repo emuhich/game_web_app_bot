@@ -1,5 +1,7 @@
 aiogram==3.13.1
 fastapi==0.115.0
+fastapi-cache2==0.2.1
+fastapi-redis-cache==0.2.5
 pydantic==2.9.2
 sqlalchemy==2.0.35
 uvicorn==0.31.0
@@ -8,3 +10,7 @@ pydantic_settings==2.5.2
 alembic==1.13.3
 aiosqlite==0.20.0
 greenlet==3.0.3
+PyYAML==6.0.1
+redis==5.0.1
+sqladmin[full]
+asyncpg==0.29.0

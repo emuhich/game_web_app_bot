@@ -1,0 +1,13 @@
+# Хардкод реестра доступных игр (можно расширять)
+from fastapi import APIRouter
+
+GAMES = [
+    {"slug": "honesty", "name": "Откровенность", "description": "Игра с откровенными вопросами", "is_active": True}
+]
+
+router = APIRouter(prefix="/games", tags=["Games"])
+
+
+@router.get("/", response_model=list[dict])
+async def list_games():
+    return GAMES
