@@ -7,7 +7,8 @@
 {% endblock %}
 {% block content %}
 <div class="form-wrapper">
-  <a href="/app-v-1/static" class="back-btn">← Назад</a>
+  <!-- Исправлено: ссылка ведет на главную страницу вместо /app-v-1/static -->
+  <a href="/" class="back-btn">← Назад</a>
   <h1>Мои записи</h1>
   <div class="refresh-bar">
     <button id="refresh-apps" class="refresh-btn" type="button">Обновить список</button>

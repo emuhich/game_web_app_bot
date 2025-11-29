@@ -1,4 +1,3 @@
-# Хардкод реестра доступных игр (можно расширять)
 from fastapi import APIRouter
 
 GAMES = [

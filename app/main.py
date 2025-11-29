@@ -54,14 +54,13 @@ app = FastAPI(lifespan=lifespan)
 app.add_middleware(SessionMiddleware, secret_key=settings.ADMIN_SECRET)
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-STATIC_DIR = PROJECT_ROOT / 'frontend' / 'static'
-MEDIA_DIR = PROJECT_ROOT / 'media'
+STATIC_DIR = settings.STATIC_DIR
+MEDIA_DIR = settings.MEDIA_DIR
 
 if STATIC_DIR.exists():
     app.mount('/static', StaticFiles(directory=str(STATIC_DIR)), name='static')
 else:
-    logging.warning(f"Static directory not found: {STATIC_DIR}")
+    logging.warning(f"[STATIC] Directory not found, skip mount: {STATIC_DIR}")
 
 if MEDIA_DIR.exists():
     app.mount('/media', StaticFiles(directory=str(MEDIA_DIR)), name='media')

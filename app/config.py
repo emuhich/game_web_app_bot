@@ -21,6 +21,13 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str = "admin123"
 
+    # Path constants
+    APP_DIR: Path = Path(__file__).resolve().parent  # /app
+    PROJECT_ROOT: Path = APP_DIR.parent              # project root
+    FRONTEND_DIR: Path = APP_DIR / 'frontend'
+    STATIC_DIR: Path = FRONTEND_DIR / 'static'
+    MEDIA_DIR: Path = PROJECT_ROOT / 'media'
+
     # Pydantic v2 settings config
     model_config = SettingsConfigDict(
         env_file=str(Path(__file__).resolve().parent.parent / ".env"),
