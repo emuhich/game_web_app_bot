@@ -1,9 +1,8 @@
 import logging
 from contextlib import asynccontextmanager
-from pathlib import Path
 
-import uvicorn
 import redis.asyncio as redis_async
+import uvicorn
 from aiogram.types import Update
 from fastapi import FastAPI, Request
 from fastapi_cache import FastAPICache
@@ -16,10 +15,10 @@ from app.bot.create_bot import bot, dp, stop_bot, start_bot
 from app.bot.handlers.admin_router import admin_router as admin_router_bot
 from app.bot.handlers.user_router import user_router
 from app.config import settings
+from app.frontend.pages.router import router as router_pages
 from app.games.honesty.router import router as honesty_router
 from app.games.router import router as games_router
 from app.users.router import router as users_router
-from app.frontend.pages.router import router as router_pages
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
