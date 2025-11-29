@@ -15,7 +15,7 @@ from app.bot.create_bot import bot, dp, stop_bot, start_bot
 from app.bot.handlers.admin_router import admin_router as admin_router_bot
 from app.bot.handlers.user_router import user_router
 from app.config import settings
-from app.frontend.pages.router import router as router_pages
+from app.frontend.pages.router import router_webapp
 from app.games.honesty.router import router as honesty_router
 from app.games.router import router as games_router
 from app.users.router import router as users_router
@@ -55,23 +55,26 @@ app.add_middleware(SessionMiddleware, secret_key=settings.ADMIN_SECRET)
 
 STATIC_DIR = settings.STATIC_DIR
 MEDIA_DIR = settings.MEDIA_DIR
+logging.info(f"[PATHS] STATIC_DIR={STATIC_DIR.resolve()} | MEDIA_DIR={MEDIA_DIR.resolve()}")
 
 if STATIC_DIR.exists():
-    app.mount('/static', StaticFiles(directory=str(STATIC_DIR)), name='static')
+    app.mount('/static', StaticFiles(directory=str(STATIC_DIR), follow_symlink=True), name='static')
+    logging.info(f"[STATIC] mounted at /static → {STATIC_DIR}")
 else:
     logging.warning(f"[STATIC] Directory not found, skip mount: {STATIC_DIR}")
 
 if MEDIA_DIR.exists():
-    app.mount('/media', StaticFiles(directory=str(MEDIA_DIR)), name='media')
+    app.mount('/media', StaticFiles(directory=str(MEDIA_DIR), follow_symlink=True), name='media')
+    logging.info(f"[MEDIA] mounted at /media → {MEDIA_DIR}")
 else:
-    logging.warning(f"Media directory not found: {MEDIA_DIR}")
+    logging.warning(f"[MEDIA] Directory not found: {MEDIA_DIR}")
 
 init_sqladmin(app)
 
 app.include_router(users_router)
 app.include_router(games_router)
 app.include_router(honesty_router)
-app.include_router(router_pages)
+app.include_router(router_webapp)
 
 
 @app.post("/webhook")

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Возрастное ограничение{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/webapp.css">{% endblock %}
+{% block content %}
+<div class="gating-wrapper">
+  <h2>Возрастное ограничение 18+</h2>
+  <p>Категория содержит материалы для взрослых. Подтвердите возраст, чтобы продолжить.</p>
+  <form method="get" action="/honesty/play/{{ category.id }}">
+    <input type="hidden" name="age_verified" value="true">
+    <button type="submit" class="enter-btn">Мне 18+</button>
+  </form>
+</div>
+{% endblock %}

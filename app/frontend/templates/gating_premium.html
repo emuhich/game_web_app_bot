@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Premium{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/webapp.css">{% endblock %}
+{% block content %}
+<div class="gating-wrapper">
+  <h2>Премиум категория</h2>
+  <p>Требуется активная подписка. Оформите премиум, чтобы получить доступ.</p>
+  <button class="enter-btn" id="buy-premium">Купить премиум</button>
+</div>
+{% endblock %}
+{% block scripts %}<script>document.getElementById('buy-premium').addEventListener('click',()=>alert('Заглушка покупки')); </script>{% endblock %}

@@ -1,35 +1,42 @@
-{% extends "base.html" %}
-
-{% block title %}
-{{ title }}
-{% endblock %}
-
+{% extends 'base.html' %}
+{% block title %}Игры{% endblock %}
 {% block styles %}
-<link rel="stylesheet" href="/static/css/index.css">
+<link rel="stylesheet" href="/static/css/webapp.css?v=2">
 {% endblock %}
-
 {% block content %}
-<header>
-    <div class="header-content">
-        <svg class="scissors" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <path d="M30,40 L70,80 M30,80 L70,40 M50,60 L90,20 M50,60 L10,20"/>
-        </svg>
-        <h1>{{ title }}</h1>
-    </div>
-</header>
-<main>
-    <h2>Откройте для себя мир стиля</h2>
-    <div class="divider"></div>
-    <p>Наши <span class="highlight">талантливые мастера</span> создадут для вас <span class="highlight">неповторимый образ</span>,
-        который подчеркнет вашу индивидуальность и шарм.</p>
-
-    <div class="btn-group">
-        <a id="book-button" class="btn">Записаться сейчас</a>
-        <a id="my-applications" class="btn btn-secondary" href="/applications">Мои записи</a>
-    </div>
-</main>
+<div class="games-wrapper">
+  <header class="hero">
+    <h1>Игры</h1>
+    <p class="subtitle">Выберите формат, чтобы начать</p>
+  </header>
+  <section class="games-carousel" id="games-carousel">
+    {% for g in games %}
+    <article class="game-card full-screen-card" data-code="{{ g.code }}" style="background: {{ g.color|default('var(--card)') }};">
+      {% if g.photo_url %}
+      <img src="{{ g.photo_url }}" alt="{{ g.title }}" class="game-img full-img">
+      {% endif %}
+      <div class="game-bg"></div>
+      <div class="game-content">
+        <h2>{{ g.title }}</h2>
+        <p>{{ g.subtitle }}</p>
+        {% if g.premium %}<span class="badge premium">Premium</span>{% endif %}
+        <form method="get" action="/honesty">
+          <button type="submit" class="enter-btn app-btn" data-action="enter-game">Играть</button>
+        </form>
+      </div>
+    </article>
+    {% endfor %}
+  </section>
+  <footer class="bottom-bar">
+    {% if premium %}
+      <span class="premium-active">Премиум активен</span>
+    {% else %}
+      <a href="/premium" class="buy-premium app-link" data-action="buy-premium">Премиум</a>
+    {% endif %}
+    <a href="/profile" class="profile-link app-link" data-action="open-profile">Профиль</a>
+  </footer>
+</div>
 {% endblock %}
-
 {% block scripts %}
 <script src="/static/js/index.js"></script>
 {% endblock %}

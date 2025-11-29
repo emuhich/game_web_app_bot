@@ -1,0 +1,465 @@
+/* Base layout - интегрируем Tailwind-эквиваленты */
+:root {
+  --bg: #6d55d9;
+  --bg-alt: #8963e8;
+  --card: #7a5fe0;
+  --card-alt: #8c6ff0;
+  --text: #ffffff;
+  --text-muted: rgba(255,255,255,0.75);
+  --danger: #ff5577;
+  --premium: #ffc700;
+  --radius-xl: 48px;
+  --radius-lg: 32px;
+  --radius: 20px;
+  --shadow: 0 8px 24px -8px rgba(0,0,0,0.35);
+  --purple-400: #c084fc;
+  --purple-300: #a855f7;
+  --white-5: rgba(255,255,255,0.05);
+  --black: #000000;
+  --white: #ffffff;
+}
+
+/* Tailwind-like utilities */
+.min-h-screen {
+  min-height: 100vh;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-start {
+  justify-content: flex-start;
+}
+
+.bg-gradient-to-br.from-purple-400.to-purple-300 {
+  background: linear-gradient(to bottom right, var(--purple-400), var(--purple-300));
+}
+
+.p-6 {
+  padding: 1.5rem;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.max-w-6xl {
+  max-width: 72rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.py-8 {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.text-white {
+  color: var(--white);
+}
+
+.text-xl {
+  font-size: 1.25rem;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.relative {
+  position: relative;
+}
+
+.overflow-x-auto {
+  overflow-x: auto;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.snap-x {
+  scroll-snap-type: x var(--tw-scroll-snap-strictness);
+  --tw-scroll-snap-strictness: proximity;
+}
+
+.snap-mandatory {
+  --tw-scroll-snap-strictness: mandatory;
+}
+
+.flex {
+  display: flex;
+}
+
+.gap-6 {
+  gap: 1.5rem;
+}
+
+.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.py-6 {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+.snap-start {
+  scroll-snap-align: start;
+}
+
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+.w-\[850px\] {
+  width: 850px;
+}
+
+.md\:w-\[900px\] {
+  @media (min-width: 768px) {
+    width: 900px;
+  }
+}
+
+.lg\:w-\[1000px\] {
+  @media (min-width: 1024px) {
+    width: 1000px;
+  }
+}
+
+.rounded-2xl {
+  border-radius: 1rem;
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+}
+
+.bg-white\/5 {
+  background-color: var(--white-5);
+}
+
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.h-96 {
+  height: 24rem;
+}
+
+.md\:h-\[420px\] {
+  @media (min-width: 768px) {
+    height: 420px;
+  }
+}
+
+.lg\:h-\[520px\] {
+  @media (min-width: 1024px) {
+    height: 520px;
+  }
+}
+
+.object-cover {
+  object-fit: cover;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.mt-8 {
+  margin-top: 2rem;
+}
+
+.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.max-w-4xl {
+  max-width: 42rem;
+}
+
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.block {
+  display: block;
+}
+
+.bg-black {
+  background-color: var(--black);
+}
+
+.text-white {
+  color: var(--white);
+}
+
+.rounded-full {
+  border-radius: 9999px;
+}
+
+.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.shadow-inner {
+  box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.06);
+}
+
+.mt-12 {
+  margin-top: 3rem;
+}
+
+.text-white\/80 {
+  color: rgba(255,255,255,0.8);
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+/* Фон и каркас страниц */
+body {
+  margin: 0;
+  background: linear-gradient(to bottom right, var(--purple-400), var(--purple-300));
+  color: var(--white);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Добавляем гибкую верстку для страницы категорий:
+   - основной контент растягивается
+   - ряд карточек занимает доступную высоту, чтобы карточка тянулась до футера с кнопкой "Выбрать" */
+.categories-page {
+  /* уже имеет фон, здесь обеспечим раскладку */
+}
+
+.page-header { /* уже есть базовые стили, добавим отступы под заголовок */
+  padding: 16px 20px 0;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.page-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Футер остается прижатым снизу, карточки должны учитывать его высоту */
+.page-footer {
+  position: sticky;
+  bottom: 0;
+  padding: 16px 20px 24px;
+  background: linear-gradient(to top, rgba(0,0,0,0.2), rgba(0,0,0,0.0));
+}
+
+/* Ряд категорий заполняет доступную высоту страницы, минус футер и шапка */
+.categories-row {
+  flex: 1 1 auto;            /* растягиваем по высоте доступного пространства */
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+
+/* Карточка должна тянуться вниз до футера:
+   занимаем почти всю высоту контейнера ряда, оставляя небольшой внутренний запас */
+.category-card {
+  height: calc(100% - 12px); /* заполняем высоту ряда, минус небольшой отступ, чтобы не ломать тени */
+  max-height: none;          /* не ограничиваем сверху */
+}
+
+/* Специфичные правила для страницы категорий: переопределяем фиксированные высоты */
+.categories-page .categories-row {
+  flex: 1 1 auto;
+}
+
+.categories-page .category-card {
+  height: calc(100% - 12px);
+  max-height: none;
+}
+
+/* На маленьких экранах оставим адаптивность, но все равно привяжем к ряду */
+@media (max-width: 680px) {
+  .category-card { height: calc(100% - 12px); }
+}
+
+/* Удаляем фиксированные h-96/прочие специфические высоты, если применялись в этом контексте */
+.h-96 { /* не используем фикс. высоту для карточек на странице категорий */ }
+
+/* Черная основная кнопка */
+.primary-btn {
+  appearance: none;
+  border: none;
+  border-radius: 9999px;
+  padding: 16px 22px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  background: #000; /* черная кнопка */
+  box-shadow: var(--shadow);
+}
+
+/* Ряд категорий (горизонтальный скролл) */
+.categories-row {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+
+/* Карточка категории: фото заполняет всю карточку */
+.category-card {
+  position: relative;
+  flex: 0 0 86vw; /* широкая карточка для свайпа */
+  max-width: 980px;
+  height: 56vh;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  scroll-snap-align: center;
+  background: var(--white-5);
+  backdrop-filter: blur(6px);
+}
+
+.card-media, .card-img {
+  width: 100%;
+  height: 100%;
+}
+
+.card-img {
+  display: block;
+  object-fit: cover; /* изображение полностью заполняет карточку */
+}
+
+.card-img.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ccc;
+  color: #555;
+}
+
+/* Информационный слой поверх фото (внизу) */
+.card-info {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 16px 20px;
+  background: linear-gradient(to top, rgba(0,0,0,0.5), rgba(0,0,0,0.0));
+}
+
+/* Заголовок сверху карточки */
+.card-title {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  right: 16px;
+  margin: 0;
+  font-size: 22px; /* крупно */
+  font-weight: 800;
+  text-transform: uppercase; /* капсом */
+  letter-spacing: 1px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+/* Описание снизу мелким текстом */
+.card-desc {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  margin: 0;
+  font-size: 12px; /* мелко */
+  color: var(--text-muted);
+}
+
+/* Бейджи в левом верхнем углу, рядом с заголовком */
+.badges {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.badge.premium { background: var(--premium); color: #000; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 700; }
+.badge.adult { background: #000; color: #fff; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 700; }
+
+/* Чтобы заголовок не перекрывал бейджи, добавим отступ справа если нужно */
+@media (min-width: 0px) {
+  .card-title { padding-right: 120px; }
+}
+
+@media (max-width: 680px) {
+  .category-card { height: 50vh; }
+}
+
+@media (max-width: 768px) {
+  .w-\[850px\] {
+    width: calc(100% - 2rem);
+  }
+  .h-96 {
+    height: 50vh;
+  }
+}
+
+.page-footer .footer-actions.single {
+  display: block;
+}
+.page-footer .primary-btn.full {
+  width: 100%;
+  display: block;
+}
+
+/* Чуть больше нижнего отступа, чтобы кнопка не прилипала к скруглениям */
+.page-footer { padding-bottom: 28px; }

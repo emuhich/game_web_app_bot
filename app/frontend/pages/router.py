@@ -1,39 +1,63 @@
-from fastapi import APIRouter
-from fastapi.templating import Jinja2Templates
-from fastapi.requests import Request
+from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import HTMLResponse
-from pathlib import Path
-import logging
+from fastapi.templating import Jinja2Templates
 from typing import Optional
+from pathlib import Path
 
-router = APIRouter(prefix='', tags=['Фронтенд'])
+from app.games.honesty.service import HonestyService
+from app.users.service import UserService
+from app.exceptions import CategoryNotFoundException
+
+# Web-фронтенд теперь доступен с корня ("/"), поэтому prefix оставляем пустым
+router_webapp = APIRouter(prefix="", tags=["Frontend"])
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / 'templates'
-if not TEMPLATES_DIR.exists():
-    logging.warning(f"Templates directory not found: {TEMPLATES_DIR}")
-
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
-@router.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
-    return templates.TemplateResponse(
-        "index.html",
-        {"request": request, "title": "Элегантная парикмахерская"}
-    )
+async def _get_user_context(telegram_id: Optional[int]):
+    if not telegram_id:
+        return {"user": None, "premium": None}
+    try:
+        user, premium = await UserService.get_profile(telegram_id)
+        return {"user": user, "premium": premium}
+    except Exception:
+        return {"user": None, "premium": None}
 
 
-@router.get("/form", response_class=HTMLResponse)
-async def get_form(request: Request, user_id: Optional[int] = None, first_name: Optional[str] = None):
-    return templates.TemplateResponse(
-        "form.html",
-        {"request": request, "user_id": user_id, "first_name": first_name}
-    )
+@router_webapp.get('/', response_class=HTMLResponse)
+async def games_index(request: Request, telegram_id: Optional[int] = None):
+    games = [
+        {"code": "honesty", "title": "Откровенность", "subtitle": "Поговорим откровенно?", "premium": False}
+    ]
+    ctx = await _get_user_context(telegram_id)
+    return templates.TemplateResponse('index.html', {"request": request, "games": games, **ctx})
 
 
-@router.get("/applications", response_class=HTMLResponse)
-async def get_applications_page(request: Request, user_id: Optional[int] = None):
-    return templates.TemplateResponse(
-        "applications.html",
-        {"request": request, "user_id": user_id}
-    )
+@router_webapp.get('/honesty', response_class=HTMLResponse)
+async def honesty_categories(request: Request, telegram_id: Optional[int] = None):
+    ctx = await _get_user_context(telegram_id)
+    categories = await HonestyService.get_visible_categories()
+    return templates.TemplateResponse('honesty_categories.html', {"request": request, "categories": categories, **ctx})
+
+
+@router_webapp.get('/honesty/play/{category_id}', response_class=HTMLResponse)
+async def honesty_play(
+    request: Request,
+    category_id: int,
+    telegram_id: Optional[int] = None,
+    age_verified: bool = False,
+):
+    ctx = await _get_user_context(telegram_id)
+    try:
+        category = await HonestyService.get_category_or_raise(category_id)
+    except CategoryNotFoundException:
+        raise HTTPException(status_code=404, detail='Категория не найдена')
+    if not category.is_visible:
+        raise HTTPException(status_code=403, detail='Категория скрыта')
+    if category.is_adult and not age_verified:
+        return templates.TemplateResponse('gating_age.html', {"request": request, "category": category, **ctx})
+    if category.is_premium and not ctx.get('premium'):
+        return templates.TemplateResponse('gating_premium.html', {"request": request, "category": category, **ctx})
+    questions = await HonestyService.get_questions(category_id)
+    return templates.TemplateResponse('honesty_play.html', {"request": request, "category": category, "questions": questions, **ctx})

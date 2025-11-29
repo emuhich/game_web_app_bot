@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Игра{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/webapp.css?v=2">{% endblock %}
+{% block content %}
+<div class="play-wrapper">
+  <header class="hero">
+    <button id="choose-other" class="nav-btn top-back-btn">← Категории</button>
+    <h1>{{ category.name }}</h1>
+    <p class="subtitle">{{ category.description }}</p>
+  </header>
+  <div class="cards-stack full-screen-stack" id="cards-stack">
+    {% for q in questions %}
+    <div class="question-card full-screen-card" data-index="{{ loop.index0 }}" style="background: {{ category.color }}; --card: {{ category.color }};">
+      <div class="q-content">
+        <p class="q-text">{{ q.text }}</p>
+        <span class="q-badge">m</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/honesty_play.js"></script>{% endblock %}

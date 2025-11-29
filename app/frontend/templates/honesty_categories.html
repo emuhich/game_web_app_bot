@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Категории{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/webapp.css?v=8">{% endblock %}
+{% block content %}
+<div class="page categories-page" style="background: url('/static/media/2nugy_.png') center/cover no-repeat fixed;">
+  <header class="page-header">
+    <h2 class="page-title">Выбери категорию вопросов</h2>
+  </header>
+  <main class="page-main">
+    <div class="categories-row no-scrollbar" id="categories-row">
+      {% for c in categories %}
+      <article class="category-card" data-id="{{ c.id }}" aria-label="{{ c.name }}">
+        <div class="card-media">
+          {% if c.image %}
+          <img src="{{ c.image }}" alt="{{ c.name }}" class="card-img" />
+          {% else %}
+          <img src="/static/media/ref.jpg" alt="{{ c.name }}" class="card-img" />
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </main>
+  <footer class="page-footer">
+    <div class="footer-actions single">
+      <button type="button" id="choose-current" class="primary-btn full">Выбрать</button>
+    </div>
+  </footer>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/honesty_categories.js?v=5"></script>{% endblock %}

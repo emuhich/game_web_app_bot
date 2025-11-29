@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     PROJECT_ROOT: Path = APP_DIR.parent              # project root
     FRONTEND_DIR: Path = APP_DIR / 'frontend'
     STATIC_DIR: Path = FRONTEND_DIR / 'static'
-    MEDIA_DIR: Path = PROJECT_ROOT / 'media'
+    MEDIA_DIR: Path = PROJECT_ROOT / 'app/media'
 
     # Pydantic v2 settings config
     model_config = SettingsConfigDict(
