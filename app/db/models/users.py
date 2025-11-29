@@ -12,6 +12,9 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     premium: Mapped['Premium'] = relationship(back_populates='user', uselist=False)
 
+    def __str__(self) -> str:
+        return f"{self.first_name} (@{self.username})"
+
 
 class Premium(Base):
     __tablename__ = 'premiums'
@@ -21,3 +24,6 @@ class Premium(Base):
     expire_date: Mapped[Date] = mapped_column(Date, nullable=False)
     auto_renew: Mapped[bool] = mapped_column(Boolean, default=False)
     user: Mapped['User'] = relationship(back_populates='premium')
+
+    def __str__(self) -> str:
+        return f"Premium for User ID {self.user_id} until {self.expire_date}"

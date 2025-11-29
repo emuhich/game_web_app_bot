@@ -21,6 +21,13 @@ class HonCategory(Base):
         back_populates='category', cascade='all, delete-orphan'
     )
 
+    @property
+    def upload_image(self):
+        return None
+
+    def __str__(self) -> str:
+        return self.name or f"Category #{self.id}"
+
 
 class HonQuestion(Base):
     __tablename__ = 'honesty_questions'
@@ -28,6 +35,8 @@ class HonQuestion(Base):
     category_id: Mapped[int] = mapped_column(Integer, ForeignKey('honesty_categories.id', ondelete='CASCADE'),
                                              index=True)
     text: Mapped[str] = mapped_column(String(500), nullable=False)
-    order: Mapped[int] = mapped_column(Integer, default=0, index=True)
-
     category: Mapped['HonCategory'] = relationship(back_populates='questions')
+
+    def __str__(self) -> str:
+        preview = (self.text or '').strip()
+        return preview[:50] + ('...' if len(preview) > 50 else '')

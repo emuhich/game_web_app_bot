@@ -1,10 +1,11 @@
 from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import selectinload
 
 from app.dao.base import BaseDAO
 from app.db.models.honesty import HonCategory, HonQuestion
-from app.db.database import async_session_maker
+import app.db.database as db
 
 
 class HonCategoryDAO(BaseDAO):
@@ -12,14 +13,21 @@ class HonCategoryDAO(BaseDAO):
 
     @classmethod
     async def get_visible(cls) -> List[HonCategory]:
-        async with async_session_maker() as session:
-            result = await session.execute(select(HonCategory).filter_by(is_visible=True).order_by(HonCategory.order))
-            return result.scalars().all()
+        async with db.async_session_maker() as session:
+            stmt = (
+                select(HonCategory)
+                .options(selectinload(HonCategory.questions))
+                .filter_by(is_visible=True)
+                .order_by(HonCategory.order)
+            )
+            result = await session.execute(stmt)
+            return result.scalars().unique().all()
 
     @classmethod
     async def get_by_id(cls, category_id: int) -> Optional[HonCategory]:
-        async with async_session_maker() as session:
-            result = await session.execute(select(HonCategory).filter_by(id=category_id))
+        async with db.async_session_maker() as session:
+            stmt = select(HonCategory).options(selectinload(HonCategory.questions)).filter_by(id=category_id)
+            result = await session.execute(stmt)
             return result.scalar_one_or_none()
 
 
@@ -28,14 +36,16 @@ class HonQuestionDAO(BaseDAO):
 
     @classmethod
     async def get_by_category(cls, category_id: int) -> List[HonQuestion]:
-        async with async_session_maker() as session:
-            result = await session.execute(select(HonQuestion).filter_by(category_id=category_id).order_by(HonQuestion.order))
+        async with db.async_session_maker() as session:
+            result = await session.execute(
+                select(HonQuestion).filter_by(category_id=category_id)
+            )
             return result.scalars().all()
 
     @classmethod
-    async def add_question(cls, category_id: int, text: str, order: int = 0) -> HonQuestion:
-        async with async_session_maker() as session:
-            question = HonQuestion(category_id=category_id, text=text, order=order)
+    async def add_question(cls, category_id: int, text: str) -> HonQuestion:
+        async with db.async_session_maker() as session:
+            question = HonQuestion(category_id=category_id, text=text)
             session.add(question)
             try:
                 await session.commit()
@@ -44,4 +54,3 @@ class HonQuestionDAO(BaseDAO):
                 await session.rollback()
                 raise
             return question
-

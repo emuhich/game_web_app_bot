@@ -6,7 +6,6 @@ class HonQuestionRead(BaseModel):
     id: int
     category_id: int
     text: str
-    order: int
 
 
 class HonCategoryRead(BaseModel):
@@ -36,4 +35,3 @@ class HonCategoryCreate(BaseModel):
 class HonQuestionCreate(BaseModel):
     category_id: int
     text: str
-    order: int = 0

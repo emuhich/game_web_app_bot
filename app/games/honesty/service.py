@@ -37,10 +37,10 @@ class HonestyService:
         )
 
     @staticmethod
-    async def create_question(category_id: int, text: str, order: int = 0):
+    async def create_question(category_id: int, text: str):
         # проверяем категорию
         await HonestyService.get_category_or_raise(category_id)
-        return await HonQuestionDAO.add_question(category_id=category_id, text=text, order=order)
+        return await HonQuestionDAO.add_question(category_id=category_id, text=text)
 
     @staticmethod
     async def get_question_or_raise(question_id: int):
