@@ -5,6 +5,9 @@ from typing import Optional
 from pathlib import Path
 import random
 import httpx
+import hmac
+import hashlib
+from urllib.parse import parse_qs
 
 from app.games.honesty.service import HonestyService
 from app.users.service import UserService
@@ -106,3 +109,69 @@ async def honesty_play(
     if questions:
         random.shuffle(questions)
     return templates.TemplateResponse('honesty_play.html', {"request": request, "category": category, "questions": questions, **ctx})
+
+
+# Безопасная авторизация: принимаем initData строкой, валидируем подпись и TTL, кладем telegram_id в сессию
+@router_webapp.post('/api/auth', response_class=JSONResponse)
+async def webapp_auth(request: Request):
+    data = await request.json()
+    init_data: str = data.get('initData') or ''
+    if not init_data:
+        raise HTTPException(status_code=400, detail='initData is required')
+    if not settings.BOT_TOKEN:
+        raise HTTPException(status_code=500, detail='BOT_TOKEN not configured')
+
+    # Парсим строку initData как query string
+    params = parse_qs(init_data, keep_blank_values=True)
+    # Извлекаем hash и auth_date
+    hash_values = params.get('hash', [])
+    auth_values = params.get('auth_date', [])
+    if not hash_values or not auth_values:
+        raise HTTPException(status_code=400, detail='Invalid initData')
+    provided_hash = hash_values[0]
+    auth_date_str = auth_values[0]
+
+    items = []
+    for k, vs in params.items():
+        if k == 'hash':
+            continue
+        v = vs[0] if isinstance(vs, list) else vs
+        items.append(f"{k}={v}")
+    items.sort(key=lambda s: s.split('=')[0])
+    data_check_string = "\n".join(items)
+
+    secret_key = hmac.new(b"WebAppData", settings.BOT_TOKEN.encode('utf-8'), hashlib.sha256).digest()
+    computed_hash = hmac.new(secret_key, data_check_string.encode('utf-8'), hashlib.sha256).hexdigest()
+    if computed_hash != provided_hash:
+        raise HTTPException(status_code=401, detail='Invalid signature')
+
+    try:
+        auth_ts = int(auth_date_str)
+    except ValueError:
+        raise HTTPException(status_code=400, detail='Invalid auth_date')
+    import time
+    now = int(time.time())
+    if now - auth_ts > 3600:
+        raise HTTPException(status_code=401, detail='initData expired')
+
+    user_values = params.get('user', [])
+    telegram_id = None
+    if user_values:
+        import json
+        try:
+            user_obj = json.loads(user_values[0])
+            telegram_id = int(user_obj.get('id'))
+        except Exception:
+            telegram_id = None
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail='User not found in initData')
+
+    request.session['telegram_id'] = telegram_id
+
+    user, premium = await UserService.get_profile(telegram_id)
+    return {"ok": True, "telegram_id": telegram_id, "profile": {
+        "first_name": user.first_name,
+        "username": user.username,
+        "premium_active": bool(premium),
+        "premium_expire_date": premium.expire_date.isoformat() if premium else None
+    }}

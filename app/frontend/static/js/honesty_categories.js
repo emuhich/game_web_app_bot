@@ -2,8 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const tg = window.Telegram?.WebApp;
   if (tg) tg.expand();
 
-  let tgUser = null;
-  try { tgUser = tg?.initDataUnsafe?.user || null; } catch (e) { tgUser = null; }
+  const verifiedId = window.__verifiedAuth?.telegram_id || null;
 
   const row = document.getElementById('categories-row');
   const chooseBtn = document.getElementById('choose-current');
@@ -86,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
     buyBtn?.addEventListener('click', () => {
       try { tgCore?.HapticFeedback?.impactOccurred?.('medium'); } catch {}
       const url = new URL('/premium', window.location.origin);
-      if (tgUser?.id) url.searchParams.set('telegram_id', tgUser.id);
+      if (verifiedId) url.searchParams.set('telegram_id', verifiedId);
       window.location.href = url.toString();
     });
   }
@@ -97,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const id = activeCard.dataset.id;
     const base = `/honesty/play/${id}`;
     const params = [];
-    if (tgUser) params.push(`telegram_id=${tgUser.id}`);
+    if (verifiedId) params.push(`telegram_id=${verifiedId}`);
     const url = base + (params.length ? `?${params.join('&')}` : '');
 
     // сначала пробуем запросить доступ к вопросам через API

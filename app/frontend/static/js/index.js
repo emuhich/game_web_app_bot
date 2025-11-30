@@ -4,16 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     Telegram.WebApp.expand(); // Full-screen mode for Telegram WebApp
   }
 
-  // Безопасно инициализируем Telegram WebApp
-  let tgUser = null;
-  try {
-    tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || null;
-  } catch (e) {
-    console.warn('Telegram WebApp user init failed', e);
-    tgUser = null;
-  }
-
   const tgCore = window.Telegram?.WebApp;
+  const verifiedId = window.__verifiedAuth?.telegram_id || null;
 
   const carousel = document.getElementById('games-row');
   const playBtn = document.getElementById('play-current');
@@ -112,29 +104,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const code = activeCard.dataset.code;
     let url = '/honesty';
     if (code === 'honesty') url = '/honesty';
-    if (tgUser) url += `?telegram_id=${tgUser.id}`;
+    if (verifiedId) url += `?telegram_id=${verifiedId}`;
     window.location.href = url;
   });
 
   // Премиум и Профиль — если JS не сработает, сработает обычный href
   document.querySelectorAll('.buy-premium').forEach(link => {
     link.addEventListener('click', e => {
-      if (!tgUser) return; // пусть работает обычный href
+      if (!verifiedId) return; // без verifiedId пусть работает обычный href
       e.preventDefault();
       const url = new URL(link.href, window.location.origin);
-      url.searchParams.set('telegram_id', tgUser.id);
-      console.log('[index.js] click Премиум →', url.toString());
+      url.searchParams.set('telegram_id', verifiedId);
       window.location.href = url.toString();
     });
   });
 
   document.querySelectorAll('.profile-link').forEach(link => {
     link.addEventListener('click', e => {
-      if (!tgUser) return;
+      if (!verifiedId) return; // без verifiedId пусть работает обычный href
       e.preventDefault();
       const url = new URL(link.href, window.location.origin);
-      url.searchParams.set('telegram_id', tgUser.id);
-      console.log('[index.js] click Профиль →', url.toString());
+      url.searchParams.set('telegram_id', verifiedId);
       window.location.href = url.toString();
     });
   });

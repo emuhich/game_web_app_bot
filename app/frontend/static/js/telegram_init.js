@@ -120,3 +120,40 @@
     init();
   }
 })();
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const tg = window.Telegram?.WebApp;
+  try { tg?.expand?.(); } catch {}
+
+  // Отправляем сырые данные initData на сервер для проверки подписи и TTL
+  let verified = null;
+  try {
+    const initData = tg?.initData || '';
+    if (initData) {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData }),
+      });
+      if (res.ok) {
+        verified = await res.json();
+        // Сохраняем глобально: другие части фронта читают только это
+        window.__verifiedAuth = {
+          ok: true,
+          telegram_id: verified.telegram_id,
+          profile: verified.profile,
+        };
+        try { tg.HapticFeedback?.impactOccurred?.('light'); } catch {}
+      } else {
+        console.warn('[auth] /api/auth failed with status', res.status);
+        window.__verifiedAuth = { ok: false };
+      }
+    } else {
+      console.warn('[auth] initData is empty');
+      window.__verifiedAuth = { ok: false };
+    }
+  } catch (e) {
+    console.error('[auth] failed', e);
+    window.__verifiedAuth = { ok: false };
+  }
+});
