@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Query
-from app.games.honesty.service import HonestyService
+
 from app.games.honesty.schemas import (
     HonCategoryRead,
     HonQuestionRead,
-    HonCategoryCreate,
-    HonQuestionCreate,
 )
+from app.games.honesty.service import HonestyService
 
 router = APIRouter(prefix='/games/honesty', tags=['Honesty'])
 
@@ -20,18 +19,6 @@ async def list_categories(include_hidden: bool = Query(False, description="По�
 async def list_questions(category_id: int):
     questions = await HonestyService.get_questions(category_id)
     return [HonQuestionRead.model_validate(q, from_attributes=True) for q in questions]
-
-
-@router.post('/categories', response_model=HonCategoryRead)
-async def create_category(payload: HonCategoryCreate):
-    category = await HonestyService.create_category(**payload.model_dump())
-    return HonCategoryRead.model_validate(category, from_attributes=True)
-
-
-@router.post('/questions', response_model=HonQuestionRead)
-async def create_question(payload: HonQuestionCreate):
-    question = await HonestyService.create_question(**payload.model_dump())
-    return HonQuestionRead.model_validate(question, from_attributes=True)
 
 
 @router.get('/questions/{question_id}', response_model=HonQuestionRead)

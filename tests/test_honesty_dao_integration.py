@@ -5,11 +5,9 @@ from app.db.models.honesty import HonCategory, HonQuestion
 
 @pytest.mark.asyncio
 async def test_honesty_category_and_questions():
-    # create category via BaseDAO.add
+    # create category via BaseDAO.add (используем только существующие поля модели)
     cat = await HonCategoryDAO.add(
         name="Fun",
-        description="Test",
-        color="#fff",
         image=None,
         order=1,
         is_visible=True,
@@ -23,17 +21,18 @@ async def test_honesty_category_and_questions():
     assert len(cats) >= 1
     assert any(c.id == cat.id for c in cats)
 
-    # add question
+    # add question via DAO
     q = await HonQuestionDAO.add_question(category_id=cat.id, text="Question?")
     assert isinstance(q, HonQuestion)
+    assert q.category_id == cat.id
 
     # list questions
     qs = await HonQuestionDAO.get_by_category(cat.id)
     assert len(qs) == 1
     assert qs[0].text == "Question?"
+    assert qs[0].category_id == cat.id
 
     # get by id with questions eager
     cat2 = await HonCategoryDAO.get_by_id(cat.id)
     assert isinstance(cat2, HonCategory)
     assert isinstance(cat2.questions, list)
-
