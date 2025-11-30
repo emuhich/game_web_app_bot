@@ -2,7 +2,7 @@
 {% block title %}Игра{% endblock %}
 {% block styles %}<link rel="stylesheet" href="/static/css/webapp.css?v=13">{% endblock %}
 {% block content %}
-<div class="page play-page" style="background: url('/static/media/2nugy_.png') center/cover no-repeat fixed;"
+<div class="page play-page"
      data-is-premium-category="{{ '1' if category.is_premium else '0' }}"
      data-has-premium="{{ '1' if premium else '0' }}">
   <header class="page-header">
