@@ -1,42 +1,31 @@
 {% extends 'base.html' %}
 {% block title %}Игры{% endblock %}
 {% block styles %}
-<link rel="stylesheet" href="/static/css/webapp.css?v=2">
+<link rel="stylesheet" href="/static/css/webapp.css?v=9">
 {% endblock %}
 {% block content %}
-<div class="games-wrapper">
-  <header class="hero">
-    <h1>Игры</h1>
-    <p class="subtitle">Выберите формат, чтобы начать</p>
+<div class="page games-page" style="background: url('/static/media/2nugy_.png') center/cover no-repeat fixed;">
+  <header class="page-header">
+    <h2 class="page-title">Выбери игру</h2>
   </header>
-  <section class="games-carousel" id="games-carousel">
-    {% for g in games %}
-    <article class="game-card full-screen-card" data-code="{{ g.code }}" style="background: {{ g.color|default('var(--card)') }};">
-      {% if g.photo_url %}
-      <img src="{{ g.photo_url }}" alt="{{ g.title }}" class="game-img full-img">
-      {% endif %}
-      <div class="game-bg"></div>
-      <div class="game-content">
-        <h2>{{ g.title }}</h2>
-        <p>{{ g.subtitle }}</p>
-        {% if g.premium %}<span class="badge premium">Premium</span>{% endif %}
-        <form method="get" action="/honesty">
-          <button type="submit" class="enter-btn app-btn" data-action="enter-game">Играть</button>
-        </form>
-      </div>
-    </article>
-    {% endfor %}
-  </section>
-  <footer class="bottom-bar">
-    {% if premium %}
-      <span class="premium-active">Премиум активен</span>
-    {% else %}
-      <a href="/premium" class="buy-premium app-link" data-action="buy-premium">Премиум</a>
-    {% endif %}
-    <a href="/profile" class="profile-link app-link" data-action="open-profile">Профиль</a>
+  <main class="page-main">
+    <section class="categories-row no-scrollbar" id="games-row">
+      {% for g in games %}
+      <article class="category-card game-card" data-code="{{ g.code }}" aria-label="{{ g.title }}">
+        {% if g.photo_url %}
+        <img src="{{ g.photo_url }}" alt="{{ g.title }}" class="card-img" />
+        {% endif %}
+      </article>
+      {% endfor %}
+    </section>
+  </main>
+  <footer class="page-footer">
+    <div class="footer-actions single">
+      <button type="button" id="play-current" class="primary-btn full">Играть</button>
+    </div>
   </footer>
 </div>
 {% endblock %}
 {% block scripts %}
-<script src="/static/js/index.js"></script>
+<script src="/static/js/index.js?v=2"></script>
 {% endblock %}

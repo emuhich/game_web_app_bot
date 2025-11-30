@@ -1,23 +1,23 @@
 {% extends 'base.html' %}
 {% block title %}Игра{% endblock %}
-{% block styles %}<link rel="stylesheet" href="/static/css/webapp.css?v=2">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/webapp.css?v=13">{% endblock %}
 {% block content %}
-<div class="play-wrapper">
-  <header class="hero">
-    <button id="choose-other" class="nav-btn top-back-btn">← Категории</button>
-    <h1>{{ category.name }}</h1>
-    <p class="subtitle">{{ category.description }}</p>
+<div class="page play-page" style="background: url('/static/media/2nugy_.png') center/cover no-repeat fixed;">
+  <header class="page-header">
+    <!-- удалена кастомная кнопка Назад, используем системную Telegram BackButton -->
   </header>
-  <div class="cards-stack full-screen-stack" id="cards-stack">
-    {% for q in questions %}
-    <div class="question-card full-screen-card" data-index="{{ loop.index0 }}" style="background: {{ category.color }}; --card: {{ category.color }};">
-      <div class="q-content">
-        <p class="q-text">{{ q.text }}</p>
-        <span class="q-badge">m</span>
-      </div>
+  <main class="page-main">
+    <div class="cards-stack" id="cards-stack">
+      {% for q in questions %}
+      <article class="question-card" data-index="{{ loop.index0 }}">
+        <div class="q-header">{{ category.name }}</div>
+        <div class="q-content">
+          <p class="q-text">{{ q.text }}</p>
+        </div>
+      </article>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
+  </main>
 </div>
 {% endblock %}
-{% block scripts %}<script src="/static/js/honesty_play.js"></script>{% endblock %}
+{% block scripts %}<script src="/static/js/honesty_play.js?v=6"></script>{% endblock %}

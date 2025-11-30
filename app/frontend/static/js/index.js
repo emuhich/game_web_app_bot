@@ -13,46 +13,54 @@ document.addEventListener('DOMContentLoaded', () => {
     tgUser = null;
   }
 
-  const carousel = document.getElementById('games-carousel');
-  if (carousel) {
-    // Горизонтальный скролл колесом мыши
-    carousel.addEventListener('wheel', e => {
-      if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
-        carousel.scrollBy({ left: e.deltaY, behavior: 'smooth' });
-        e.preventDefault();
-      }
-    }, { passive: false });
+  const carousel = document.getElementById('games-row');
+  const playBtn = document.getElementById('play-current');
+  if (!carousel || !playBtn) return;
 
-    // drag-scroll
-    let isDown = false, startX, scrollStart;
-    carousel.addEventListener('pointerdown', e => {
-      isDown = true;
-      startX = e.pageX;
-      scrollStart = carousel.scrollLeft;
-      carousel.setPointerCapture(e.pointerId);
+  // Определяем активную карточку (ближайшая к центру)
+  let activeCard = null;
+  const updateActive = () => {
+    const cards = Array.from(carousel.querySelectorAll('.game-card'));
+    if (!cards.length) { activeCard = null; return; }
+    const center = window.innerWidth / 2;
+    let best = null, bestDist = Infinity;
+    cards.forEach(card => {
+      const rect = card.getBoundingClientRect();
+      const c = rect.left + rect.width / 2;
+      const d = Math.abs(c - center);
+      if (d < bestDist) { bestDist = d; best = card; }
     });
-    carousel.addEventListener('pointermove', e => {
-      if (!isDown) return;
-      const dx = e.pageX - startX;
-      carousel.scrollLeft = scrollStart - dx;
-    });
-    const endDrag = () => {
-      isDown = false;
-    };
-    carousel.addEventListener('pointerup', endDrag);
-    carousel.addEventListener('pointerleave', endDrag);
-  }
+    cards.forEach(c => c.classList.toggle('is-active', c === best));
+    activeCard = best;
+  };
+  updateActive();
 
-  // Кнопка "Играть" — вообще не меняем поведение submit, только логируем факт клика
-  const playButtons = document.querySelectorAll('.enter-btn');
-  console.log('[index.js] найдено кнопок Играть:', playButtons.length);
-  playButtons.forEach(btn => {
-    console.log('[index.js] кнопка Играть:', btn);
-    btn.addEventListener('click', () => {
-      console.log('[index.js] click по кнопке Играть');
-      // Ничего не трогаем: форма сама отправится на /honesty
-      // Если нужно будет добавить telegram_id, сделаем это на сервере из initData
-    });
+  let rafId = null;
+  const onScroll = () => { if (rafId) cancelAnimationFrame(rafId); rafId = requestAnimationFrame(updateActive); };
+  carousel.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll, { passive: true });
+
+  // drag-scroll
+  let isDown = false, startX = 0, scrollStart = 0;
+  carousel.addEventListener('pointerdown', e => {
+    isDown = true; startX = e.pageX; scrollStart = carousel.scrollLeft;
+    carousel.setPointerCapture(e.pointerId);
+  });
+  carousel.addEventListener('pointermove', e => {
+    if (!isDown) return; const dx = e.pageX - startX; carousel.scrollLeft = scrollStart - dx; onScroll();
+  });
+  const endDrag = () => { isDown = false; };
+  carousel.addEventListener('pointerup', endDrag);
+  carousel.addEventListener('pointerleave', endDrag);
+
+  // Кнопка «Играть» — переход в выбранную игру
+  playBtn.addEventListener('click', () => {
+    if (!activeCard) return;
+    const code = activeCard.dataset.code;
+    // пока одна игра honesty, переходим туда; дальше можно роутить по code
+    let url = '/honesty';
+    if (tgUser) url += `?telegram_id=${tgUser.id}`;
+    window.location.href = url;
   });
 
   // Премиум и Профиль — если JS не сработает, сработает обычный href

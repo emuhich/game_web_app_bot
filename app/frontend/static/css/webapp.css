@@ -17,6 +17,8 @@
   --white-5: rgba(255,255,255,0.05);
   --black: #000000;
   --white: #ffffff;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Tailwind-like utilities */
@@ -259,6 +261,7 @@
 body {
   margin: 0;
   background: linear-gradient(to bottom right, var(--purple-400), var(--purple-300));
+  background-position: center -40px; /* поднимаем фон вверх */
   color: var(--white);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
 }
@@ -267,6 +270,8 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  padding-top: calc(var(--safe-top) + 8px);
+  padding-bottom: calc(var(--safe-bottom) + 8px);
 }
 
 /* Добавляем гибкую верстку для страницы категорий:
@@ -291,6 +296,7 @@ body {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
+  margin-top: 4px;
 }
 
 /* Футер остается прижатым снизу, карточки должны учитывать его высоту */
@@ -316,6 +322,7 @@ body {
 .category-card {
   height: calc(100% - 12px); /* заполняем высоту ряда, минус небольшой отступ, чтобы не ломать тени */
   max-height: none;          /* не ограничиваем сверху */
+  margin-top: -12px;
 }
 
 /* Специфичные правила для страницы категорий: переопределяем фиксированные высоты */
@@ -348,6 +355,22 @@ body {
   background: #000; /* черная кнопка */
   box-shadow: var(--shadow);
 }
+
+/* Кнопка «Назад» в общем стиле */
+.back-btn {
+  appearance: none;
+  border: none;
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  border-radius: 9999px;
+  padding: 10px 16px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow);
+}
+.back-btn:hover { background: rgba(0,0,0,0.45); }
+.back-btn:active { transform: translateY(1px); }
 
 /* Ряд категорий (горизонтальный скролл) */
 .categories-row {
@@ -463,3 +486,153 @@ body {
 
 /* Чуть больше нижнего отступа, чтобы кнопка не прилипала к скруглениям */
 .page-footer { padding-bottom: 28px; }
+
+/* Экраны игры: стек карточек вопроса заполняет основную область */
+.play-page .page-main { display: flex; }
+.play-page #cards-stack {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+  min-height: 78vh; /* больше вертикали */
+  overflow: hidden; /* убираем возможную полосу прокрутки */
+}
+
+/* Карточка вопроса: увеличиваем высоту */
+.play-page .question-card {
+  position: absolute;
+  width: 86vw;
+  max-width: 980px;
+  height: 72vh; /* было 64vh → выше карточка */
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow);
+  background: #6d55d9;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -58%); /* было -56% → ещё выше */
+  touch-action: pan-x; /* позволяем горизонтальный жест, убираем конфликт с вертикальным скроллом */
+}
+
+@media (max-width: 680px) {
+  .play-page #cards-stack { min-height: 70vh; }
+  .play-page .question-card { height: 66vh; transform: translate(-50%, -57%); } /* мобильная версия тоже выше */
+}
+
+/* Заголовок категории: по центру, приглушённый цвет */
+.play-page .q-header {
+  padding-top: 16px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: rgba(233, 216, 253, 0.8); /* приглушенный */
+}
+
+.play-page .q-content { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; }
+.play-page .q-text { margin: 0; font-size: 20px; line-height: 1.5; color: #fff; }
+
+/* Визуальная стопка: нижние карты слегка выглядывают даже статично */
+.question-card.stack-0 { z-index: 3; }
+.question-card.stack-1 { z-index: 2; transform: translate(-50%, -50%) translate(14px, 12px) scale(0.985); filter: brightness(0.95); }
+.question-card.stack-2 { z-index: 1; transform: translate(-50%, -50%) translate(26px, 22px) scale(0.97); filter: brightness(0.9); }
+
+/* Во время перетаскивания плавность и усиленная тень */
+.question-card.dragging { box-shadow: 0 16px 34px -12px rgba(0,0,0,0.55); }
+
+@media (max-width: 680px) {
+  .play-page #cards-stack { min-height: 70vh; }
+  .play-page .question-card { height: 66vh; transform: translate(-50%, -57%); }
+}
+
+/* Страница категорий: дополнительно опускаем ряд карточек ниже, ориентируясь на футер */
+.categories-page .page-main {
+  margin-top: 4px;
+}
+.categories-page .categories-row {
+  padding-top: 4px;
+  padding-bottom: 32px; /* запас над кнопкой "Выбрать" */
+}
+
+/* Увеличиваем верхний отступ для заголовка на экране категорий,
+   чтобы текст «Выбери категорию…» гарантированно не пересекался с системными элементами */
+.categories-page .page-header {
+  padding-top: calc(var(--safe-top) + 12px); /* было по умолчанию, теперь больше запаса */
+  padding-bottom: 8px; /* небольшой нижний отступ под заголовком */
+}
+
+.categories-page .page-title { margin-top: -4px; }
+
+/* Дополнительный зазор между заголовком и рядом карточек */
+.categories-page .categories-row {
+  padding-top: 20px; /* было 12px → ещё больший зазор под заголовком */
+}
+
+/* Активная категория: визуальная подсветка */
+.category-card {
+  transition: transform .25s ease, box-shadow .25s ease, outline-color .25s ease;
+}
+.category-card.is-active {
+  outline: 4px solid rgba(255,255,255,0.85);
+  outline-offset: -4px;
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.35), var(--shadow);
+  transform: scale(1.015);
+}
+
+/* Финальный экран с текстом и кнопкой "Далее" */
+.end-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 32px 24px;
+  text-align: center;
+  min-height: 60vh;
+}
+
+.end-screen .end-text {
+  font-size: 20px;
+  line-height: 1.4;
+  max-width: 560px;
+  margin: 0 auto;
+  color: var(--text);
+}
+
+.end-screen .next-game-btn {
+  appearance: none;
+  border: none;
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  font-weight: 700;
+  padding: 14px 26px;
+  border-radius: 9999px;
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow);
+  font-size: 16px;
+  outline: none;
+}
+
+.end-screen .next-game-btn:focus,
+.end-screen .next-game-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.35), var(--shadow);
+}
+
+.end-screen .next-game-btn:active {
+  transform: translateY(1px);
+}
+
+/* Анимация появления для финального экрана */
+.fade-in { animation: fadeIn .45s ease forwards; opacity:0; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+/* Стили для направления свайпа и bounce эффекта */
+.question-card.swipe-left-preview { box-shadow: 0 16px 34px -12px rgba(0,0,0,0.55), inset -80px 0 120px -60px rgba(0,0,0,0.25); }
+.question-card.swipe-right-preview { box-shadow: 0 16px 34px -12px rgba(0,0,0,0.55), inset 80px 0 120px -60px rgba(0,0,0,0.25); }
+.question-card.bounce { animation: cardBounce .32s cubic-bezier(.34,1.56,.64,1); }
+@keyframes cardBounce { 0% { transform: translate(-50%, -50%) scale(1); } 40% { transform: translate(-50%, -50%) scale(1.025); } 100% { transform: translate(-50%, -50%) scale(1); } }
