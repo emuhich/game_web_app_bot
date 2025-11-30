@@ -1,8 +1,11 @@
+import { haptics } from '/static/js/haptics.js';
+import { getVerifiedId } from '/static/js/auth.js';
+
 document.addEventListener('DOMContentLoaded', () => {
   const stack = document.getElementById('cards-stack');
   if (!stack) return;
 
-  const tg = window.Telegram?.WebApp;
+  const verifiedId = getVerifiedId();
 
   let cards = Array.from(stack.querySelectorAll('.question-card'));
 
@@ -37,12 +40,17 @@ document.addEventListener('DOMContentLoaded', () => {
   `;
     main.appendChild(end);
     const btn = end.querySelector('#next-game-btn');
-    try { tg?.HapticFeedback?.notificationOccurred?.('success'); } catch {}
+    haptics.notify('success');
     const navigate = () => {
       if (navigating) return;
       navigating = true;
-      try { tg?.HapticFeedback?.impactOccurred?.('light'); } catch {}
-      const url = '/honesty' + params;
+      haptics.impact('light');
+      let url = '/honesty';
+      if (verifiedId) {
+        const u = new URL(url, window.location.origin);
+        u.searchParams.set('telegram_id', String(verifiedId));
+        url = u.toString();
+      }
       setTimeout(() => { window.location.replace(url); }, 10);
     };
     ['pointerdown','click','touchend'].forEach(evt => {
@@ -64,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function swipeOut(card, dir){
-    try { tg?.HapticFeedback?.impactOccurred?.('medium'); } catch {}
+    haptics.impact('medium');
     const base='translate(-50%, -50%)';
     const finalX = window.innerWidth * 1.1 * dir;
     const rot = dir>0?MAX_ROT:-MAX_ROT;
@@ -101,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
       card.style.transform = `${base} translate(${dx}px,0) rotate(${rot}deg)`;
       const w = width();
       const step = Math.floor((Math.abs(dx)/w) / 0.2);
-      if (step > lastStep) { try { tg?.HapticFeedback?.selectionChanged?.(); } catch {} lastStep = step; }
+      if (step > lastStep) { haptics.selection(); lastStep = step; }
     });
     const finish = () => {
       if(!down) return; down=false; const w=width(); const ratio=Math.abs(dx)/w; const dir=dx>0?1:-1;

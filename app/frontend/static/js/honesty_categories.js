@@ -1,8 +1,12 @@
-document.addEventListener('DOMContentLoaded', () => {
+import { ensureAuth, getVerifiedId } from '/static/js/auth.js';
+import { haptics } from '/static/js/haptics.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await ensureAuth();
   const tg = window.Telegram?.WebApp;
   if (tg) tg.expand();
 
-  const verifiedId = window.__verifiedAuth?.telegram_id || null;
+  const verifiedId = getVerifiedId();
 
   const row = document.getElementById('categories-row');
   const chooseBtn = document.getElementById('choose-current');
@@ -83,20 +87,22 @@ document.addEventListener('DOMContentLoaded', () => {
     closeBtn?.addEventListener('click', close);
 
     buyBtn?.addEventListener('click', () => {
-      try { tgCore?.HapticFeedback?.impactOccurred?.('medium'); } catch {}
+      haptics.impact('medium');
       const url = new URL('/premium', window.location.origin);
-      if (verifiedId) url.searchParams.set('telegram_id', verifiedId);
+      const vid = getVerifiedId();
+      if (vid) url.searchParams.set('telegram_id', vid);
       window.location.href = url.toString();
     });
   }
 
   chooseBtn.addEventListener('click', async () => {
-    try { tgCore?.HapticFeedback?.impactOccurred?.('light'); } catch {}
+    haptics.impact('light');
     if (!activeCard) return;
     const id = activeCard.dataset.id;
     const base = `/honesty/play/${id}`;
     const params = [];
-    if (verifiedId) params.push(`telegram_id=${verifiedId}`);
+    const vid = getVerifiedId();
+    if (vid) params.push(`telegram_id=${vid}`);
     const url = base + (params.length ? `?${params.join('&')}` : '');
 
     // сначала пробуем запросить доступ к вопросам через API
@@ -108,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       if (!res.ok) {
-        // другие ошибки — можно показать alert или просто не переходить
         return;
       }
       // доступ разрешён — переходим обычным образом

@@ -21,7 +21,14 @@ TEMPLATES_DIR = Path(__file__).resolve().parent.parent / 'templates'
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
-async def _get_user_context(telegram_id: Optional[int]):
+async def _get_user_context(request: Request, telegram_id: Optional[int]):
+    # если параметр не передан, пробуем взять из сессии (после /api/auth)
+    if not telegram_id:
+        try:
+            sid = request.session.get('telegram_id')
+            telegram_id = int(sid) if sid else None
+        except Exception:
+            telegram_id = None
     if not telegram_id:
         return {"user": None, "premium": None}
     try:
@@ -38,13 +45,13 @@ async def games_index(request: Request, telegram_id: Optional[int] = None):
         {"code": "mulabar", "title": "Мулабар", "subtitle": "Выпивай и выполняй задания", "premium": False, "image": "static/media/mulabar.png", "in_development": True},
         {"code": "crocodile", "title": "Крокодил", "subtitle": "Изображай то, что загадано", "premium": False, "image": "static/media/crocodile.png", "in_development": True},
     ]
-    ctx = await _get_user_context(telegram_id)
+    ctx = await _get_user_context(request, telegram_id)
     return templates.TemplateResponse('index.html', {"request": request, "games": games, **ctx})
 
 
 @router_webapp.get('/premium', response_class=HTMLResponse)
 async def premium_page(request: Request, telegram_id: Optional[int] = None):
-    ctx = await _get_user_context(telegram_id)
+    ctx = await _get_user_context(request, telegram_id)
     return templates.TemplateResponse('premium.html', {"request": request, **ctx, "settings": settings})
 
 
@@ -84,7 +91,7 @@ async def get_premium_invoice(telegram_id: int):
 
 @router_webapp.get('/honesty', response_class=HTMLResponse)
 async def honesty_categories(request: Request, telegram_id: Optional[int] = None):
-    ctx = await _get_user_context(telegram_id)
+    ctx = await _get_user_context(request, telegram_id)
     categories = await HonestyService.get_visible_categories()
     return templates.TemplateResponse('honesty_categories.html', {"request": request, "categories": categories, **ctx})
 
@@ -95,7 +102,7 @@ async def honesty_play(
     category_id: int,
     telegram_id: Optional[int] = None,
 ):
-    ctx = await _get_user_context(telegram_id)
+    ctx = await _get_user_context(request, telegram_id)
     try:
         category = await HonestyService.get_category_or_raise(category_id)
     except CategoryNotFoundException:
