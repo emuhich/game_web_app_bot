@@ -89,7 +89,6 @@ async def honesty_play(
     request: Request,
     category_id: int,
     telegram_id: Optional[int] = None,
-    age_verified: bool = False,
 ):
     ctx = await _get_user_context(telegram_id)
     try:
@@ -98,10 +97,9 @@ async def honesty_play(
         raise HTTPException(status_code=404, detail='Категория не найдена')
     if not category.is_visible:
         raise HTTPException(status_code=403, detail='Категория скрыта')
-    if category.is_adult and not age_verified:
-        return templates.TemplateResponse('gating_age.html', {"request": request, "category": category, **ctx})
+    # Если категория премиум, а подписки нет — не отдаём вопросы, возвращаем 402, фронт покажет попап
     if category.is_premium and not ctx.get('premium'):
-        return templates.TemplateResponse('gating_premium.html', {"request": request, "category": category, **ctx})
+        raise HTTPException(status_code=402, detail='Требуется премиум')
     questions = await HonestyService.get_questions(category_id)
     if questions:
         random.shuffle(questions)

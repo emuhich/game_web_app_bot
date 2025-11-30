@@ -1,11 +1,39 @@
 {% extends 'base.html' %}
-{% block title %}Premium{% endblock %}
-{% block styles %}<link rel="stylesheet" href="/static/css/webapp.css">{% endblock %}
+{% block title %}Премиум{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/webapp.css?v=13">{% endblock %}
 {% block content %}
-<div class="gating-wrapper">
-  <h2>Премиум категория</h2>
-  <p>Требуется активная подписка. Оформите премиум, чтобы получить доступ.</p>
-  <button class="enter-btn" id="buy-premium">Купить премиум</button>
+<div class="page premium-page" style="background: url('/static/media/2nugy_.png') center/cover no-repeat fixed;">
+  <header class="page-header">
+  </header>
+  <main class="page-main premium-main">
+    <section class="premium-card">
+      <div class="premium-card-inner">
+        <p class="premium-status">Это премиум-категория</p>
+        <p class="premium-subtext">
+          Оформи премиум, чтобы открыть все вопросы в категории «{{ category.name }}»
+          и другие премиум-игры.
+        </p>
+        <div class="premium-actions">
+          <button type="button" id="go-to-premium" class="primary-btn full">Купить премиум</button>
+        </div>
+      </div>
+    </section>
+  </main>
 </div>
 {% endblock %}
-{% block scripts %}<script>document.getElementById('buy-premium').addEventListener('click',()=>alert('Заглушка покупки')); </script>{% endblock %}
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const tg = window.Telegram?.WebApp;
+    const btn = document.getElementById('go-to-premium');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      try { tg?.HapticFeedback?.impactOccurred?.('medium'); } catch {}
+      const tgUser = tg?.initDataUnsafe?.user;
+      const url = new URL('/premium', window.location.origin);
+      if (tgUser?.id) url.searchParams.set('telegram_id', tgUser.id);
+      window.location.href = url.toString();
+    });
+  });
+</script>
+{% endblock %}

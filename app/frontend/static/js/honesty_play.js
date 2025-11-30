@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const stack = document.getElementById('cards-stack');
   if (!stack) return;
 
+  const tg = window.Telegram?.WebApp;
+
   let cards = Array.from(stack.querySelectorAll('.question-card'));
 
   const layoutStack = () => {
@@ -13,16 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   layoutStack();
 
-  let endDisplayed = false; // перемещено вверх для использования
-  let navigating = false; // предотвратить двойной переход
-  let activePointerId = null; // отслеживание pointerId для безопасного release
-  const tg = window.Telegram?.WebApp;
+  let endDisplayed = false;
+  let navigating = false;
+  let activePointerId = null;
 
   const showEndScreen = () => {
     if (endDisplayed) return;
-    // принудительно снимаем pointer capture со всех старых карт (на случай залипания)
     stack.querySelectorAll('.question-card').forEach(c => {
-      try { c.releasePointerCapture?.(activePointerId); } catch {}
+      try { if (activePointerId != null) c.releasePointerCapture?.(activePointerId); } catch {}
     });
     endDisplayed = true;
     if (stack) stack.style.display = 'none';
@@ -31,7 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!main) return;
     const end = document.createElement('div');
     end.className = 'end-screen fade-in';
-    end.innerHTML = `\n    <p class="end-text">Вопросы в карточке кончились. Перейдем к следующей теме?</p>\n    <button type="button" class="next-game-btn" id="next-game-btn">Новая игра</button>\n  `;
+    end.innerHTML = `
+    <p class="end-text">Вопросы в карточке кончились. Перейдём к следующей теме?</p>
+    <button type="button" class="next-game-btn" id="next-game-btn">Новая игра</button>
+  `;
     main.appendChild(end);
     const btn = end.querySelector('#next-game-btn');
     try { tg?.HapticFeedback?.notificationOccurred?.('success'); } catch {}
@@ -42,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const url = '/honesty' + params;
       setTimeout(() => { window.location.replace(url); }, 10);
     };
-    // Мульти-события для надежности первого срабатывания
     ['pointerdown','click','touchend'].forEach(evt => {
       btn.addEventListener(evt, navigate, { passive: true });
     });
@@ -50,8 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.focus();
   };
 
-  // === Упрощённая механика свайпа (без превью-теней и дерганий) ===
-  const SWIPE_THRESHOLD_RATIO = 0.5; // 50% ширины
+  const SWIPE_THRESHOLD_RATIO = 0.5;
   const SWIPE_OUT_DURATION_MS = 340;
   const MAX_ROT = 10;
 
@@ -65,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function swipeOut(card, dir){
     try { tg?.HapticFeedback?.impactOccurred?.('medium'); } catch {}
     const base='translate(-50%, -50%)';
-    const finalX = window.innerWidth * 1.1 * dir; // финальная точка за пределами экрана
+    const finalX = window.innerWidth * 1.1 * dir;
     const rot = dir>0?MAX_ROT:-MAX_ROT;
     card.style.transition = `transform ${SWIPE_OUT_DURATION_MS}ms ease-out, opacity ${SWIPE_OUT_DURATION_MS}ms ease-out`;
     card.style.transform = `${base} translate(${finalX}px,0) rotate(${rot}deg)`;
@@ -93,14 +94,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastStep = 0;
 
     card.addEventListener('pointerdown', e => {
-      down=true; sx=e.clientX; dx=0; card.style.transition='none'; lastStep = 0;
+      down=true; sx=e.clientX; dx=0; card.style.transition='none'; lastStep = 0; activePointerId = e.pointerId;
     });
     card.addEventListener('pointermove', e => {
       if(!down) return; dx=e.clientX - sx; const rot=Math.max(-MAX_ROT, Math.min(MAX_ROT, dx/25));
       card.style.transform = `${base} translate(${dx}px,0) rotate(${rot}deg)`;
-      // Хаптика выбора: каждые ~20% смещения даём отклик selectionChanged
       const w = width();
-      const step = Math.floor((Math.abs(dx)/w) / 0.2); // шаги по 20%
+      const step = Math.floor((Math.abs(dx)/w) / 0.2);
       if (step > lastStep) { try { tg?.HapticFeedback?.selectionChanged?.(); } catch {} lastStep = step; }
     });
     const finish = () => {
@@ -110,22 +110,20 @@ document.addEventListener('DOMContentLoaded', () => {
     card.addEventListener('pointerup', finish);
     card.addEventListener('pointercancel', finish);
   });
-  // === Конец упрощённой механики свайпа ===
 
-  // Один раз за сессию: обучающий оверлей поверх экрана вопросов
   const PLAY_HINT_KEY = 'swipe_hint_play_shown_v1';
   function showSwipeHintOverlay(){
-    const page = document.querySelector('.play-page') || document.body;
+    const host = document.querySelector('.play-page') || document.body;
     const overlay = document.createElement('div');
     overlay.className = 'swipe-hint-overlay';
     overlay.innerHTML = `
       <div class="swipe-hint" role="dialog" aria-modal="true">
         <h3 class="hint-title">Как получить следующий вопрос</h3>
         <p class="hint-text">Перетащите карточку влево или вправо и отпустите — откроется следующий вопрос.</p>
-        <div class="hint-gesture"><span class="hand">⟵ 👆⟶</span></div>
+        <div class="hint-gesture"><span class="hand"> <- 👆-></span></div>
         <button class="hint-close" type="button">Понятно</button>
       </div>`;
-    page.appendChild(overlay);
+    host.appendChild(overlay);
     const closeBtn = overlay.querySelector('.hint-close');
     const close = () => {
       overlay.classList.add('fade-out');
