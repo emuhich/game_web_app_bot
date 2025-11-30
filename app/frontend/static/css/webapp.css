@@ -449,14 +449,30 @@ body {
 /* Бейджи в левом верхнем углу, рядом с заголовком */
 .badges {
   position: absolute;
-  top: 12px;
-  left: 16px;
+  top: 14px;  /* было 10px → чуть ниже от самого края */
+  left: 28px; /* было 22px → ещё правее от скругления */
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
-.badge.premium { background: var(--premium); color: #000; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 700; }
-.badge.adult { background: #000; color: #fff; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 700; }
+/* Базовый стиль бейджа: белая обводка, полупрозрачный фон, белый текст */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 12px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(4px);
+}
+
+.badge.premium { /* общий стиль через .badge */ }
+.badge.adult { /* общий стиль через .badge */ }
 
 /* Чтобы заголовок не перекрывал бейджи, добавим отступ справа если нужно */
 @media (min-width: 0px) {
@@ -477,15 +493,29 @@ body {
 }
 
 .page-footer .footer-actions.single {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 .page-footer .primary-btn.full {
   width: 100%;
-  display: block;
 }
 
-/* Чуть больше нижнего отступа, чтобы кнопка не прилипала к скруглениям */
-.page-footer { padding-bottom: 28px; }
+/* Стиль ссылки Премиум на главном экране */
+.premium-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255,255,255,0.7);
+  color: rgba(255,255,255,0.9);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  background: rgba(0,0,0,0.18);
+  backdrop-filter: blur(4px);
+}
 
 /* Экраны игры: стек карточек вопроса заполняет основную область */
 .play-page .page-main { display: flex; }
@@ -627,6 +657,40 @@ body {
   transform: translateY(1px);
 }
 
+.badges {
+  position: absolute;
+  top: 14px;  /* было 10px → чуть ниже от самого края */
+  left: 28px; /* было 22px → ещё правее от скругления */
+  display: flex;
+  gap: 6px;
+}
+
+/* Базовый стиль бейджа: белая обводка, полупрозрачный фон, белый текст */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 12px; /* немного больше, чтобы текст дышал */
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  font-size: 12px; /* было 11px → чуть крупнее */
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(4px);
+}
+
+/* Premium и возрастной бейдж используют один и тот же белый стиль */
+.badge.premium {
+  /* общий стиль через .badge */
+}
+
+.badge.adult {
+  /* общий стиль через .badge */
+}
+
+
 /* Анимация появления для финального экрана */
 .fade-in { animation: fadeIn .45s ease forwards; opacity:0; }
 @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
@@ -655,3 +719,94 @@ body {
 .game-card.is-active { outline: 4px solid rgba(255,255,255,0.85); outline-offset: -4px; box-shadow: 0 0 0 4px rgba(255,255,255,0.35), var(--shadow); transform: scale(1.015); }
 .game-card .card-img { width: 100%; height: 100%; object-fit: cover; border-radius: calc(var(--radius-xl) - 12px); }
 .games-row { padding-top: 36px; padding-bottom: 8px; }
+
+/* Страница премиума */
+.premium-page .page-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10px 20px 36px; /* было 18px 20px 32px → подняли выше и чуть увеличили низ */
+}
+
+.premium-card {
+  width: 100%;
+  max-width: 960px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.premium-card-inner {
+  width: 100%;
+  border-radius: var(--radius-xl);
+  padding: 18px 22px 28px; /* было 28px 22px 24px → меньше сверху, чуть больше снизу */
+  background: radial-gradient(circle at top left, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.premium-actions {
+  margin-top: 18px;
+}
+
+.premium-status {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.premium-expire {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+}
+
+.premium-subtext {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.premium-plans {
+  display: flex;
+  justify-content: center;
+}
+
+.premium-plan {
+  appearance: none;
+  border: 1px solid rgba(255,255,255,0.85);
+  background: rgba(0,0,0,0.18);
+  color: #fff;
+  border-radius: 9999px;
+  padding: 10px 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+.premium-plan .plan-title {
+  font-size: 15px;
+}
+
+.premium-plan .plan-price {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.premium-plan:active {
+  transform: translateY(1px);
+}
+
+@media (max-width: 680px) {
+  .premium-card-inner {
+    padding: 24px 18px 24px;
+    border-radius: 32px;
+  }
+  .premium-status { font-size: 18px; }
+  .premium-plan { padding: 9px 20px; }
+}

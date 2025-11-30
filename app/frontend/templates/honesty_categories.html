@@ -17,6 +17,16 @@
           <img src="/static/media/ref.jpg" alt="{{ c.name }}" class="card-img" />
           {% endif %}
         </div>
+        {% if c.is_premium or c.is_adult %}
+        <div class="badges">
+          {% if c.is_premium %}
+          <span class="badge premium">Premium</span>
+          {% endif %}
+          {% if c.is_adult %}
+          <span class="badge adult">18+</span>
+          {% endif %}
+        </div>
+        {% endif %}
       </article>
       {% endfor %}
     </div>

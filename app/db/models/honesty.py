@@ -9,8 +9,6 @@ class HonCategory(Base):
     __tablename__ = 'honesty_categories'
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    color: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     image: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)
     order: Mapped[int] = mapped_column(Integer, default=0, index=True)
     is_visible: Mapped[bool] = mapped_column(Boolean, default=True, index=True)

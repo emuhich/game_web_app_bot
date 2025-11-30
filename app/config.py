@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     CACHE_TIMEOUT: int = 30
+    PAYMENTS_PROVIDER_TOKEN: str = "your_payments_provider_token"
     # Добавлены недостающие ключи для админ-панели/auth
     ADMIN_SECRET: str = "supersecretkey_change_me"
     ADMIN_USERNAME: str = "admin"

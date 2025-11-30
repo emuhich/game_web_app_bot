@@ -22,13 +22,11 @@ class HonestyService:
         return await HonQuestionDAO.get_by_category(category_id)
 
     @staticmethod
-    async def create_category(name: str, description: Optional[str] = None, color: Optional[str] = None,
+    async def create_category(name: str,
                               image: Optional[str] = None, order: int = 0, is_visible: bool = True,
                               is_premium: bool = False, is_adult: bool = False):
         return await HonCategoryDAO.add(
             name=name,
-            description=description,
-            color=color,
             image=image,
             order=order,
             is_visible=is_visible,

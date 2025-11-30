@@ -14,8 +14,6 @@ class HonQuestionRead(BaseModel):
 class HonCategoryRead(BaseModel):
     id: int
     name: str
-    description: Optional[str]
-    color: Optional[str]
     image: Optional[str]
     order: int
     is_visible: bool
@@ -29,8 +27,6 @@ class HonCategoryRead(BaseModel):
 
 class HonCategoryCreate(BaseModel):
     name: str
-    description: Optional[str] = None
-    color: Optional[str] = None
     image: Optional[str] = None
     order: int = 0
     is_visible: bool = True

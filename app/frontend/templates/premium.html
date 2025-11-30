@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Премиум{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="/static/css/webapp.css?v=9">
+{% endblock %}
+{% block content %}
+<div class="page premium-page" style="background: url('/static/media/2nugy_.png') center/cover no-repeat fixed;">
+  <header class="page-header">
+    <h2 class="page-title">Премиум</h2>
+  </header>
+  <main class="page-main premium-main">
+    <section class="premium-card">
+      <div class="premium-card-inner">
+        {% if premium %}
+        <p class="premium-status">У тебя уже есть премиум</p>
+        <p class="premium-expire">Активен до {{ premium.expire_date.strftime('%d.%m.%Y') }}</p>
+        <p class="premium-subtext">Новая подписка станет доступна после окончания текущей.</p>
+        {% else %}
+        <p class="premium-status">Открой все премиум-категории и функции.</p>
+        <p class="premium-subtext">Ежегодная подписка с полным доступом ко всем премиум-играм и категориям.</p>
+        <div class="premium-plans">
+          <button type="button" class="premium-plan is-active" data-duration="365">
+            <span class="plan-title">1 год</span>
+            <span class="plan-price">229 ₽</span>
+          </button>
+        </div>
+        <div class="premium-actions">
+          <button type="button" id="premium-buy" class="primary-btn full">Купить премиум</button>
+        </div>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const tg = window.Telegram?.WebApp;
+    const tgUser = tg?.initDataUnsafe?.user || null;
+    const planButtons = Array.from(document.querySelectorAll('.premium-plan'));
+    const buyBtn = document.getElementById('premium-buy');
+
+    // выбор тарифа (на будущее, если появятся другие периоды)
+    planButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        planButtons.forEach(b => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+      });
+    });
+
+    if (!buyBtn) return;
+
+    buyBtn.addEventListener('click', async () => {
+      const active = document.querySelector('.premium-plan.is-active');
+      const duration = active?.dataset.duration || '365';
+      if (!tgUser) {
+        tg?.showAlert?.('Не удалось определить пользователя Telegram');
+        return;
+      }
+      try {
+        // запрашиваем invoice_url у backend
+        const params = new URLSearchParams({ telegram_id: String(tgUser.id), duration_days: duration });
+        const res = await fetch(`/api/premium/invoice?${params.toString()}`);
+        if (!res.ok) {
+          throw new Error('Ошибка при создании счёта');
+        }
+        const data = await res.json();
+        if (!data.invoice_url) {
+          throw new Error('invoice_url не получен');
+        }
+        tg?.openInvoice(data.invoice_url);
+      } catch (e) {
+        console.error(e);
+        tg?.showAlert?.('Не удалось создать платёж. Попробуй позже.');
+      }
+    });
+
+    if (tg && tg.onEvent) {
+      tg.onEvent('invoiceClosed', ({ status }) => {
+        if (status === 'paid') {
+          tg.showPopup({
+            title: 'Успешно',
+            message: 'Платёж принят! Подписка будет активирована в течение нескольких секунд.',
+            buttons: [{ type: 'ok' }]
+          });
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}
