@@ -91,18 +91,36 @@
     }
   }
 
+  function updateOrientationOverlay() {
+    const isLandscape = window.innerWidth > window.innerHeight;
+    let overlay = document.querySelector('.orientation-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'orientation-overlay';
+      overlay.innerHTML = '<div class="box"><h3 class="title">Поверните устройство вертикально</h3><p class="text">Приложение работает только в портретном режиме.</p></div>';
+      document.body.appendChild(overlay);
+    }
+    if (isLandscape) {
+      overlay.classList.add('show');
+    } else {
+      overlay.classList.remove('show');
+    }
+  }
+
   const ROOT_PATHS = ['/']; // оставляем только абсолютный корень как место без BackButton
   let backHandler = null;
   let backDebounce = null;
 
   function attachEvents(){
     const tg = window.Telegram?.WebApp; if (!tg) return;
-    tg.onEvent?.('fullscreenChanged', () => { updateSafeArea(); controlBackButton(); });
-    tg.onEvent?.('viewportChanged', () => { updateSafeArea(); controlBackButton(); });
+    tg.onEvent?.('fullscreenChanged', () => { updateSafeArea(); controlBackButton(); updateOrientationOverlay(); });
+    tg.onEvent?.('viewportChanged', () => { updateSafeArea(); controlBackButton(); updateOrientationOverlay(); });
     tg.onEvent?.('themeChanged', () => { controlBackButton(); });
+    window.addEventListener('resize', updateOrientationOverlay, { passive: true });
+    window.addEventListener('orientationchange', updateOrientationOverlay, { passive: true });
     window.addEventListener('popstate', () => {
       if (backDebounce) clearTimeout(backDebounce);
-      backDebounce = setTimeout(controlBackButton, 50); // даем истории обновиться
+      backDebounce = setTimeout(controlBackButton, 50);
     });
   }
 
@@ -110,6 +128,7 @@
   function init(){
     attachEvents();
     controlBackButton();
+    updateOrientationOverlay();
     const ok = tryFullscreen();
     if (!ok || !isFsEnabled(window.Telegram?.WebApp)) scheduleRetries(); else maybeSetupFallbackButton();
   }

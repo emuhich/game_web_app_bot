@@ -940,3 +940,42 @@ body {
   .premium-status { font-size: 18px; }
   .premium-plan { padding: 9px 20px; }
 }
+
+.categories-page .categories-row {
+  padding-top: 48px;
+}
+
+/* Попап-блокировка горизонтальной ориентации: просим повернуть устройство вертикально */
+.orientation-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+.orientation-overlay.show {
+  display: flex;
+}
+.orientation-overlay .box {
+  background: rgba(255,255,255,0.12);
+  border-radius: 24px;
+  padding: 18px 16px;
+  max-width: 520px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.orientation-overlay .title {
+  font-weight: 800;
+  font-size: 20px;
+  margin: 0 0 8px;
+}
+.orientation-overlay .text {
+  font-size: 14px;
+  color: rgba(255,255,255,0.85);
+  margin: 0;
+}
+
