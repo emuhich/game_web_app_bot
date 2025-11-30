@@ -11,7 +11,7 @@
   <main class="page-main">
     <section class="categories-row no-scrollbar games-row" id="games-row">
       {% for g in games %}
-      <article class="category-card game-card" data-code="{{ g.code }}" aria-label="{{ g.title }}">
+      <article class="category-card game-card" data-code="{{ g.code }}" data-in-development="{{ '1' if g.in_development else '0' }}" aria-label="{{ g.title }}">
         <img src="/{{ g.image }}" alt="{{ g.title }}" class="card-img" />
       </article>
       {% endfor %}
@@ -26,5 +26,5 @@
 </div>
 {% endblock %}
 {% block scripts %}
-<script src="/static/js/index.js?v=2"></script>
+<script src="/static/js/index.js?v=3"></script>
 {% endblock %}

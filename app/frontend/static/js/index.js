@@ -17,7 +17,38 @@ document.addEventListener('DOMContentLoaded', () => {
   const playBtn = document.getElementById('play-current');
   if (!carousel || !playBtn) return;
 
-  // Определяем активную карточку (ближайшая к центру)
+  // Вспомогательный: показать оверлей-попап (в разработке)
+  function showDevOverlay() {
+    const overlay = document.createElement('div');
+    overlay.className = 'swipe-hint-overlay'; // используем существующий стиль оверлея
+    overlay.innerHTML = `
+      <div class="swipe-hint" role="dialog" aria-modal="true">
+        <h3 class="hint-title">Скоро</h3>
+        <p class="hint-text">Эта игра пока в разработке. Совсем скоро она появится в приложении!</p>
+        <div class="hint-gesture"><span class="hand">🚧</span></div>
+        <button class="hint-close" type="button">Понятно</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    const closeBtn = overlay.querySelector('.hint-close');
+    const close = () => { overlay.classList.add('fade-out'); setTimeout(() => overlay.remove(), 220); };
+    closeBtn?.addEventListener('click', close);
+  }
+
+  // Сразу ставим карусель в начало и центрируем первую карточку относительно экрана
+  const firstCard = carousel.querySelector('.game-card');
+  if (firstCard) {
+    // Вычисляем точный scrollLeft, чтобы центр первой карточки совпал с центром контейнера карусели
+    const target = firstCard.offsetLeft + (firstCard.offsetWidth / 2) - (carousel.clientWidth / 2);
+    carousel.scrollLeft = Math.max(0, target);
+  } else {
+    carousel.scrollLeft = 0;
+  }
+
+  function markDevGames() {
+    const cards = Array.from(carousel.querySelectorAll('.game-card'));
+    cards.forEach(card => { if (card.dataset.inDevelopment === '1') card.classList.add('in-development'); });
+  }
+
   let activeCard = null;
   const updateActive = () => {
     const cards = Array.from(carousel.querySelectorAll('.game-card'));
@@ -33,7 +64,13 @@ document.addEventListener('DOMContentLoaded', () => {
     cards.forEach(c => c.classList.toggle('is-active', c === best));
     activeCard = best;
   };
+
+  markDevGames();
   updateActive();
+  if (!activeCard && firstCard) {
+    firstCard.classList.add('is-active');
+    activeCard = firstCard;
+  }
 
   let rafId = null;
   const onScroll = () => { if (rafId) cancelAnimationFrame(rafId); rafId = requestAnimationFrame(updateActive); };
@@ -56,9 +93,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Кнопка «Играть» — переход в выбранную игру
   playBtn.addEventListener('click', () => {
     if (!activeCard) return;
+    const isDev = activeCard.dataset.inDevelopment === '1';
+    if (isDev) { showDevOverlay(); return; }
     const code = activeCard.dataset.code;
-    // пока одна игра honesty, переходим туда; дальше можно роутить по code
     let url = '/honesty';
+    if (code === 'honesty') url = '/honesty';
     if (tgUser) url += `?telegram_id=${tgUser.id}`;
     window.location.href = url;
   });

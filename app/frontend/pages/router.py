@@ -31,7 +31,9 @@ async def _get_user_context(telegram_id: Optional[int]):
 @router_webapp.get('/', response_class=HTMLResponse)
 async def games_index(request: Request, telegram_id: Optional[int] = None):
     games = [
-        {"code": "honesty", "title": "Откровенность", "subtitle": "Поговорим откровенно?", "premium": False, "image": "static/media/honesty.png"}
+        {"code": "honesty", "title": "Откровенность", "subtitle": "Поговорим откровенно?", "premium": False, "image": "static/media/honesty.png", "in_development": False},
+        {"code": "mulabar", "title": "Мулабар", "subtitle": "Выпивай и выполняй задания", "premium": False, "image": "static/media/mulabar.png", "in_development": True},
+        {"code": "crocodile", "title": "Крокодил", "subtitle": "Изображай то, что загадано", "premium": False, "image": "static/media/crocodile.png", "in_development": True},
     ]
     ctx = await _get_user_context(telegram_id)
     return templates.TemplateResponse('index.html', {"request": request, "games": games, **ctx})

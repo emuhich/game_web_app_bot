@@ -10,15 +10,11 @@ from sqlalchemy import select
 from app.db.database import engine, async_session_maker
 from app.db.models.users import User, Premium
 from app.db.models.honesty import HonCategory, HonQuestion
+from app.db.models.admin import Admin as AdminModel
 from app.config import settings
 from markupsafe import Markup
 
 logger = logging.getLogger(__name__)
-
-try:
-    from app.db.models.admin import Admin as AdminModel
-except ImportError:
-    AdminModel = None
 
 
 class BasicAuth(AuthenticationBackend):
@@ -54,6 +50,41 @@ class BasicAuth(AuthenticationBackend):
         return bool(request.session.get("admin"))
 
 
+class AdminUserAdmin(ModelView, model=AdminModel):
+    """Управление записями админов через веб-панель.
+
+    Позволяет создавать/редактировать админов, при этом пароль всегда хранится в виде bcrypt-хэша.
+    """
+    name = "Администратор"
+    name_plural = "Администраторы"
+    icon = "fas fa-user-shield"
+
+    column_list = (AdminModel.id, AdminModel.username)
+    column_searchable_list = ("username",)
+    column_sortable_list = (AdminModel.id, AdminModel.username)
+    column_default_sort = (AdminModel.id, False)
+
+    # В формах разрешаем редактирование username и password, но в списке пароль не показываем
+    form_columns = [AdminModel.username, AdminModel.password]
+
+    async def insert_model(self, request: Request, data: dict):
+        """При создании админа всегда хэшируем пароль перед сохранением."""
+        raw_password = data.get("password")
+        if raw_password:
+            data["password"] = bcrypt.hashpw(raw_password.encode(), bcrypt.gensalt()).decode()
+        return await super().insert_model(request, data)
+
+    async def update_model(self, request: Request, pk, data: dict):
+        """При обновлении, если пароль указан — хэшируем его, иначе не трогаем существующий хэш."""
+        raw_password = data.get("password")
+        if raw_password:
+            data["password"] = bcrypt.hashpw(raw_password.encode(), bcrypt.gensalt()).decode()
+        else:
+            # если поле пароля пустое в форме, не переписываем его пустым значением
+            data.pop("password", None)
+        return await super().update_model(request, pk, data)
+
+
 # --- Вьюхи ---
 class UserAdmin(ModelView, model=User):
     name = "Пользователь"
@@ -87,6 +118,7 @@ class HonCategoryAdmin(ModelView, model=HonCategory):
     name = "Категория"
     name_plural = "Категории"
     icon = "fas fa-layer-group"
+    page_size = 25
     column_list = (
         HonCategory.id,
         HonCategory.name,
@@ -103,12 +135,10 @@ class HonCategoryAdmin(ModelView, model=HonCategory):
     }
     column_formatters_detail = column_formatters
     column_searchable_list = ("name",)
-    column_sortable_list = ("order",)
+    column_sortable_list = (HonCategory.order, HonCategory.id)
+    column_default_sort = (HonCategory.order, False)
     form_excluded_columns = [HonCategory.image]
 
-    # правила отображения полей в create/edit/detail формах:
-    # - отдельное readonly‑поле с текущим изображением (если есть)
-    # - поле загрузки новой картинки upload_image
     form_create_rules = (
         "name",
         "order",
@@ -230,8 +260,10 @@ class HonQuestionAdmin(ModelView, model=HonQuestion):
     name = "Вопрос"
     name_plural = "Вопросы"
     icon = "fas fa-question"
+    page_size = 100
     column_list = (HonQuestion.id, HonQuestion.category, HonQuestion.text)
-    column_sortable_list = ("id",)
+    column_sortable_list = (HonCategory.id, )
+    column_default_sort = (HonQuestion.id, False)
     form_columns = [HonQuestion.category, HonQuestion.text]
     column_filters = [HonQuestionCategoryFilter()]
 
@@ -239,6 +271,7 @@ class HonQuestionAdmin(ModelView, model=HonQuestion):
 def init_sqladmin(app) -> Admin:
     auth_backend = BasicAuth(secret_key=settings.ADMIN_SECRET)
     admin = Admin(app, engine, authentication_backend=auth_backend, base_url="/admin")
+    admin.add_view(AdminUserAdmin)
     admin.add_view(UserAdmin)
     admin.add_view(PremiumAdmin)
     admin.add_view(HonCategoryAdmin)
