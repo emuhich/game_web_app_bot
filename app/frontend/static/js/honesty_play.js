@@ -17,22 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let navigating = false; // предотвратить двойной переход
   let activePointerId = null; // отслеживание pointerId для безопасного release
 
-  // Плавный апдейт трансформа при перетаскивании
-  let rafScheduled = false;
-  let currentDx = 0;
-  let targetDx = 0;
-  function scheduleTransform(card, rotFn) {
-    if (rafScheduled) return;
-    rafScheduled = true;
-    requestAnimationFrame(() => {
-      rafScheduled = false;
-      const dx = targetDx;
-      const rot = rotFn(dx);
-      const base = 'translate(-50%, -50%)';
-      card.style.transform = `${base} translate(${dx}px, 0) rotate(${rot}deg)`;
-    });
-  }
-
   const showEndScreen = () => {
     if (endDisplayed) return; // защита от повторного вызова
     // принудительно снимаем pointer capture со всех старых карт (на случай залипания)
@@ -62,31 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     btn.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !navigating) navigate(); });
     btn.focus();
-  };
-
-  const removeTopCard = (top, dir = 1) => {
-    const base = 'translate(-50%, -50%)';
-    const flyX = dir * (window.innerWidth * 0.9);
-    top.classList.remove('dragging');
-    top.style.transition = 'transform 0.42s cubic-bezier(.16,.84,.44,1), opacity 0.3s ease-out';
-    top.style.transform = `${base} translate(${flyX}px, 0) rotate(${dir>0?12:-12}deg)`;
-    top.style.opacity = '0';
-    setTimeout(() => {
-      try { if (activePointerId !== null) top.releasePointerCapture(activePointerId); } catch {}
-      top.remove();
-      layoutStack();
-      // лёгкая анимация "появления" следующей карты
-      const next = stack.querySelector('.question-card.stack-0');
-      if (next) {
-        next.style.transition = 'transform 0.35s cubic-bezier(.16,.84,.44,1), box-shadow 0.35s';
-        next.style.transform = 'translate(-50%, -50%) scale(1.02)';
-        setTimeout(() => { next.style.transform = 'translate(-50%, -50%)'; }, 360);
-      }
-      if (stack.querySelectorAll('.question-card').length === 0) {
-        showEndScreen();
-        return;
-      }
-    }, 420);
   };
 
   // === Упрощённая механика свайпа (без превью-теней и дерганий) ===
@@ -144,4 +103,28 @@ document.addEventListener('DOMContentLoaded', () => {
     card.addEventListener('pointercancel', finish);
   });
   // === Конец упрощённой механики свайпа ===
+
+  // Один раз за сессию: обучающий оверлей поверх экрана вопросов
+  const PLAY_HINT_KEY = 'swipe_hint_play_shown_v1';
+  function showSwipeHintOverlay(){
+    const page = document.querySelector('.play-page') || document.body;
+    const overlay = document.createElement('div');
+    overlay.className = 'swipe-hint-overlay';
+    overlay.innerHTML = `
+      <div class="swipe-hint" role="dialog" aria-modal="true">
+        <h3 class="hint-title">Как получить следующий вопрос</h3>
+        <p class="hint-text">Перетащите карточку влево или вправо и отпустите — откроется следующий вопрос.</p>
+        <div class="hint-gesture"><span class="hand">⟵ 👆⟶</span></div>
+        <button class="hint-close" type="button">Понятно</button>
+      </div>`;
+    page.appendChild(overlay);
+    const closeBtn = overlay.querySelector('.hint-close');
+    const close = () => {
+      overlay.classList.add('fade-out');
+      setTimeout(() => overlay.remove(), 220);
+      try { sessionStorage.setItem(PLAY_HINT_KEY, '1'); } catch {}
+    };
+    closeBtn?.addEventListener('click', close);
+  }
+  try { if (!sessionStorage.getItem(PLAY_HINT_KEY)) setTimeout(() => { if (!sessionStorage.getItem(PLAY_HINT_KEY)) showSwipeHintOverlay(); }, 80); } catch {}
 });

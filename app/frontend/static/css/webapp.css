@@ -636,3 +636,13 @@ body {
 .question-card.swipe-right-preview { box-shadow: 0 16px 34px -12px rgba(0,0,0,0.55), inset 80px 0 120px -60px rgba(0,0,0,0.25); }
 .question-card.bounce { animation: cardBounce .32s cubic-bezier(.34,1.56,.64,1); }
 @keyframes cardBounce { 0% { transform: translate(-50%, -50%) scale(1); } 40% { transform: translate(-50%, -50%) scale(1.025); } 100% { transform: translate(-50%, -50%) scale(1); } }
+
+/* Обучающий попап (один раз за сессию) */
+.swipe-hint-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.35); backdrop-filter: blur(4px); display:flex; align-items:center; justify-content:center; animation: fadeIn .25s ease forwards; }
+.swipe-hint { background: rgba(255,255,255,0.12); color:#fff; border-radius: 24px; padding: 22px 18px; max-width: 560px; margin: 0 16px; text-align:center; box-shadow: var(--shadow); }
+.hint-title { margin: 0 0 8px; font-weight: 800; font-size: 20px; }
+.hint-text { margin: 0 0 12px; font-size: 15px; color: rgba(255,255,255,0.85); }
+.hint-gesture { display:flex; align-items:center; justify-content:center; gap: 10px; font-size: 22px; margin-bottom: 12px; }
+.hint-close { appearance:none; border:none; border-radius: 9999px; padding: 10px 16px; font-weight: 700; background: rgba(0,0,0,0.45); color:#fff; box-shadow: var(--shadow); }
+.swipe-hint-overlay.fade-out { animation: fadeOut .22s ease forwards; }
+@keyframes fadeOut { from { opacity:1; } to { opacity:0; } }

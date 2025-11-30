@@ -63,15 +63,9 @@ document.addEventListener('DOMContentLoaded', () => {
   chooseBtn.addEventListener('click', () => {
     if (!activeCard) return;
     const id = activeCard.dataset.id;
-    const premium = activeCard.dataset.premium === 'true';
-    const adult = activeCard.dataset.adult === 'true';
-
-    // TODO: проверки premium/adult → редирект на гейтинг, если нужно
-
     const base = `/honesty/play/${id}`;
     const params = [];
     if (tgUser) params.push(`telegram_id=${tgUser.id}`);
-    const url = base + (params.length ? `?${params.join('&')}` : '');
-    window.location.href = url;
+    window.location.href = base + (params.length ? `?${params.join('&')}` : '');
   });
 });

@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from typing import Optional
 from pathlib import Path
+import random  # добавлен для перемешивания вопросов
 
 from app.games.honesty.service import HonestyService
 from app.users.service import UserService
@@ -60,4 +61,6 @@ async def honesty_play(
     if category.is_premium and not ctx.get('premium'):
         return templates.TemplateResponse('gating_premium.html', {"request": request, "category": category, **ctx})
     questions = await HonestyService.get_questions(category_id)
+    if questions:
+        random.shuffle(questions)
     return templates.TemplateResponse('honesty_play.html', {"request": request, "category": category, "questions": questions, **ctx})
