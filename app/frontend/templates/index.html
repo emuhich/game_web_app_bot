@@ -12,7 +12,11 @@
     <section class="categories-row no-scrollbar games-row" id="games-row">
       {% for g in games %}
       <article class="category-card game-card" data-code="{{ g.code }}" data-in-development="{{ '1' if g.in_development else '0' }}" aria-label="{{ g.title }}">
-        <img src="/{{ g.image }}" alt="{{ g.title }}" class="card-img" />
+        {% if loop.first %}
+        <img src="/{{ g.image }}" alt="{{ g.title }}" class="card-img" loading="eager" fetchpriority="high" decoding="async" width="1600" height="900" />
+        {% else %}
+        <img src="/{{ g.image }}" alt="{{ g.title }}" class="card-img" loading="lazy" fetchpriority="low" decoding="async" width="1600" height="900" />
+        {% endif %}
       </article>
       {% endfor %}
     </section>
