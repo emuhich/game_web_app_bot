@@ -37,6 +37,7 @@
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const tg = window.Telegram?.WebApp;
+    const h = tg?.HapticFeedback;
     const tgUser = tg?.initDataUnsafe?.user || null;
     const planButtons = Array.from(document.querySelectorAll('.premium-plan'));
     const buyBtn = document.getElementById('premium-buy');
@@ -46,16 +47,19 @@
       btn.addEventListener('click', () => {
         planButtons.forEach(b => b.classList.remove('is-active'));
         btn.classList.add('is-active');
+        try { h?.selectionChanged?.(); } catch {}
       });
     });
 
     if (!buyBtn) return;
 
     buyBtn.addEventListener('click', async () => {
+      try { h?.impactOccurred?.('medium'); } catch {}
       const active = document.querySelector('.premium-plan.is-active');
       const duration = active?.dataset.duration || '365';
       if (!tgUser) {
         tg?.showAlert?.('Не удалось определить пользователя Telegram');
+        try { h?.impactOccurred?.('rigid'); } catch {}
         return;
       }
       try {
@@ -73,12 +77,14 @@
       } catch (e) {
         console.error(e);
         tg?.showAlert?.('Не удалось создать платёж. Попробуй позже.');
+        try { h?.impactOccurred?.('light'); } catch {}
       }
     });
 
     if (tg && tg.onEvent) {
       tg.onEvent('invoiceClosed', ({ status }) => {
         if (status === 'paid') {
+          try { h?.notificationOccurred?.('success'); } catch {}
           tg.showPopup({
             title: 'Успешно',
             message: 'Платёж принят! Подписка будет активирована в течение нескольких секунд.',
@@ -87,6 +93,10 @@
           setTimeout(() => {
             window.location.reload();
           }, 1500);
+        } else if (status === 'cancelled') {
+          try { h?.impactOccurred?.('soft'); } catch {}
+        } else if (status === 'failed') {
+          try { h?.notificationOccurred?.('error'); } catch {}
         }
       });
     }
