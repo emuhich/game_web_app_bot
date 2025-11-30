@@ -16,9 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let endDisplayed = false; // перемещено вверх для использования
   let navigating = false; // предотвратить двойной переход
   let activePointerId = null; // отслеживание pointerId для безопасного release
+  const tg = window.Telegram?.WebApp;
 
   const showEndScreen = () => {
-    if (endDisplayed) return; // защита от повторного вызова
+    if (endDisplayed) return;
     // принудительно снимаем pointer capture со всех старых карт (на случай залипания)
     stack.querySelectorAll('.question-card').forEach(c => {
       try { c.releasePointerCapture?.(activePointerId); } catch {}
@@ -33,12 +34,13 @@ document.addEventListener('DOMContentLoaded', () => {
     end.innerHTML = `\n    <p class="end-text">Вопросы в карточке кончились. Перейдем к следующей теме?</p>\n    <button type="button" class="next-game-btn" id="next-game-btn">Новая игра</button>\n  `;
     main.appendChild(end);
     const btn = end.querySelector('#next-game-btn');
+    try { tg?.HapticFeedback?.notificationOccurred?.('success'); } catch {}
     const navigate = () => {
       if (navigating) return;
       navigating = true;
-      try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light'); } catch {}
+      try { tg?.HapticFeedback?.impactOccurred?.('light'); } catch {}
       const url = '/honesty' + params;
-      setTimeout(() => { window.location.replace(url); }, 10); // replace вместо href
+      setTimeout(() => { window.location.replace(url); }, 10);
     };
     // Мульти-события для надежности первого срабатывания
     ['pointerdown','click','touchend'].forEach(evt => {
@@ -61,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function swipeOut(card, dir){
+    try { tg?.HapticFeedback?.impactOccurred?.('medium'); } catch {}
     const base='translate(-50%, -50%)';
     const finalX = window.innerWidth * 1.1 * dir; // финальная точка за пределами экрана
     const rot = dir>0?MAX_ROT:-MAX_ROT;
@@ -87,13 +90,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let down=false, sx=0, dx=0;
     const base='translate(-50%, -50%)';
     const width = () => card.offsetWidth||1;
+    let lastStep = 0;
 
     card.addEventListener('pointerdown', e => {
-      down=true; sx=e.clientX; dx=0; card.style.transition='none';
+      down=true; sx=e.clientX; dx=0; card.style.transition='none'; lastStep = 0;
     });
     card.addEventListener('pointermove', e => {
       if(!down) return; dx=e.clientX - sx; const rot=Math.max(-MAX_ROT, Math.min(MAX_ROT, dx/25));
       card.style.transform = `${base} translate(${dx}px,0) rotate(${rot}deg)`;
+      // Хаптика выбора: каждые ~20% смещения даём отклик selectionChanged
+      const w = width();
+      const step = Math.floor((Math.abs(dx)/w) / 0.2); // шаги по 20%
+      if (step > lastStep) { try { tg?.HapticFeedback?.selectionChanged?.(); } catch {} lastStep = step; }
     });
     const finish = () => {
       if(!down) return; down=false; const w=width(); const ratio=Math.abs(dx)/w; const dir=dx>0?1:-1;

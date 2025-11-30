@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Храним текущую активную карточку
   let activeCard = null;
 
-  // Функция вычисления активной карточки: ближайшая к центру вьюпорта
+  // Хаптик: отклик при смене активной карточки
+  const tgCore = window.Telegram?.WebApp;
   const updateActiveCard = () => {
     const cards = Array.from(row.querySelectorAll('.category-card'));
     if (!cards.length) { activeCard = null; return; }
@@ -24,9 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const dist = Math.abs(cardCenter - viewportCenter);
       if (dist < bestDist) { bestDist = dist; best = card; }
     });
-    // Обновим визуально (можно добавить класс .is-active)
+    const prev = activeCard;
     cards.forEach(c => c.classList.toggle('is-active', c === best));
     activeCard = best;
+    if (prev && best && prev !== best) { try { tgCore?.HapticFeedback?.selectionChanged?.(); } catch {} }
   };
 
   // Первичный расчет
@@ -41,10 +43,10 @@ document.addEventListener('DOMContentLoaded', () => {
   row.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll, { passive: true });
 
-  // Drag-scroll для мыши/тача
-  let isDown = false, startX = 0, scrollL = 0;
+  // Drag-scroll для мыши/тача с хаптиком по шагам
+  let isDown = false, startX = 0, scrollL = 0, lastStep = 0;
   row.addEventListener('pointerdown', e => {
-    isDown = true; startX = e.pageX; scrollL = row.scrollLeft;
+    isDown = true; startX = e.pageX; scrollL = row.scrollLeft; lastStep = 0;
     row.setPointerCapture(e.pointerId);
     row.style.cursor = 'grabbing';
   });
@@ -54,6 +56,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const dx = e.pageX - startX;
     row.scrollLeft = scrollL - dx;
     onScroll();
+    // Хаптик: каждые ~25% ширины карточки
+    const cardW = activeCard?.getBoundingClientRect()?.width || 1;
+    const step = Math.floor(Math.abs(dx) / (cardW * 0.25));
+    if (step > lastStep) { try { tgCore?.HapticFeedback?.selectionChanged?.(); } catch {} lastStep = step; }
   });
   const end = () => { isDown = false; row.style.cursor = 'grab'; };
   row.addEventListener('pointerup', end);
@@ -61,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Нажатие большой кнопки "Выбрать"
   chooseBtn.addEventListener('click', () => {
+    const tg = window.Telegram?.WebApp; try { tg?.HapticFeedback?.impactOccurred?.('light'); } catch {}
     if (!activeCard) return;
     const id = activeCard.dataset.id;
     const base = `/honesty/play/${id}`;

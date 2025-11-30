@@ -47,11 +47,28 @@
     }
   }
 
+  function controlBackButton(){
+    const tg = window.Telegram?.WebApp; if (!tg) return;
+    const path = location.pathname;
+    const isRoot = ROOT_PATHS.includes(path);
+    if (backHandler) tg.BackButton.offClick?.(backHandler);
+    if (isRoot) { tg.BackButton.hide(); backHandler = null; return; }
+    tg.BackButton.show();
+    const isHonesty = path === '/honesty' || path.startsWith('/honesty/play');
+    backHandler = () => {
+      try { tg.HapticFeedback?.impactOccurred?.('soft'); } catch {}
+      if (isHonesty) { window.location.replace('/'); return; }
+      if (history.length > 1) { history.back(); } else { tg.close(); }
+    };
+    tg.BackButton.onClick(backHandler);
+  }
+
   function scheduleRetries(){
     const timer = setInterval(() => {
       attempt++;
       const ok = tryFullscreen();
       if (ok && isFsEnabled(window.Telegram.WebApp)) {
+        try { window.Telegram.WebApp.HapticFeedback?.impactOccurred?.('light'); } catch {}
         clearInterval(timer); maybeSetupFallbackButton();
       } else if (attempt >= MAX_RETRIES) {
         clearInterval(timer); maybeSetupFallbackButton();
@@ -77,26 +94,6 @@
   const ROOT_PATHS = ['/']; // оставляем только абсолютный корень как место без BackButton
   let backHandler = null;
   let backDebounce = null;
-
-  function controlBackButton(){
-    const tg = window.Telegram?.WebApp; if (!tg) return;
-    const path = location.pathname;
-    const isRoot = ROOT_PATHS.includes(path);
-    if (backHandler) tg.BackButton.offClick?.(backHandler);
-    if (isRoot) {
-      tg.BackButton.hide(); backHandler = null; return;
-    }
-    tg.BackButton.show();
-    const isHonesty = path === '/honesty' || path.startsWith('/honesty/play');
-    backHandler = () => {
-      if (history.length > 1) {
-        history.back();
-      } else {
-        tg.close();
-      }
-    };
-    tg.BackButton.onClick(backHandler);
-  }
 
   function attachEvents(){
     const tg = window.Telegram?.WebApp; if (!tg) return;
