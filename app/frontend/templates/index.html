@@ -9,12 +9,10 @@
     <h2 class="page-title">Выбери игру</h2>
   </header>
   <main class="page-main">
-    <section class="categories-row no-scrollbar" id="games-row">
+    <section class="categories-row no-scrollbar games-row" id="games-row">
       {% for g in games %}
       <article class="category-card game-card" data-code="{{ g.code }}" aria-label="{{ g.title }}">
-        {% if g.photo_url %}
-        <img src="{{ g.photo_url }}" alt="{{ g.title }}" class="card-img" />
-        {% endif %}
+        <img src="/{{ g.image }}" alt="{{ g.title }}" class="card-img" />
       </article>
       {% endfor %}
     </section>
