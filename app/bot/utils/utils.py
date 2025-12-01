@@ -46,6 +46,8 @@ async def greet_user(message: Message, is_new_user: bool) -> None:
     status = "Вы успешно зарегистрированы!" if is_new_user else "Рады видеть вас снова!"
     await message.answer(
         f"{greeting}, <b>{message.from_user.full_name}</b>! {status}\n"
-        "Чем я могу помочь вам сегодня?",
-        reply_markup=main_keyboard(user_id=message.from_user.id, first_name=message.from_user.first_name)
+        "Более 1000 вопросов обо всем на свете 💜 Выбирай любую "
+        "тему для обсуждения, и играйте "
+        "с соулмейтом целыми сутками!",
+        reply_markup=main_keyboard()
     )

@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str = "admin123"
 
+    # YooKassa config
+    YOOKASSA_SHOP_ID: str = ""
+    YOOKASSA_SECRET_KEY: str = ""
+    YOOKASSA_TEST_MODE: bool = True
+
     # Path constants
     APP_DIR: Path = Path(__file__).resolve().parent  # /app
     PROJECT_ROOT: Path = APP_DIR.parent              # project root

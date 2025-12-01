@@ -12,7 +12,6 @@ from starlette.staticfiles import StaticFiles
 
 from app.admin.views import init_sqladmin
 from app.bot.create_bot import bot, dp, stop_bot, start_bot
-from app.bot.handlers.admin_router import admin_router as admin_router_bot
 from app.bot.handlers.user_router import user_router
 from app.config import settings
 from app.frontend.pages.router import router_webapp
@@ -28,7 +27,6 @@ async def lifespan(app: FastAPI):
     logging.info("Starting bot & cache setup...")
     # Подключаем роутеры бота
     dp.include_router(user_router)
-    dp.include_router(admin_router_bot)
     # Стартуем бота
     await start_bot()
     webhook_url = settings.get_webhook_url()

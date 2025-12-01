@@ -6,13 +6,17 @@ from starlette.datastructures import UploadFile
 from starlette.requests import Request
 from sqladmin import Admin, ModelView
 from sqladmin.authentication import AuthenticationBackend
-from sqlalchemy import select
+from sqlalchemy import select, func
 from app.db.database import engine, async_session_maker
 from app.db.models.users import User, Premium
 from app.db.models.honesty import HonCategory, HonQuestion
 from app.db.models.admin import Admin as AdminModel
 from app.config import settings
 from markupsafe import Markup
+# добавляем импорты для кастомного дашборда
+from sqladmin import BaseView, expose
+from starlette.templating import Jinja2Templates
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -268,9 +272,40 @@ class HonQuestionAdmin(ModelView, model=HonQuestion):
     column_filters = [HonQuestionCategoryFilter()]
 
 
+class DashboardRoot(BaseView):
+    name = "Обзор"
+    icon = "fas fa-chart-line"
+
+    # Рендер из общей папки шаблонов фронта
+    _templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / 'frontend' / 'templates'))
+
+    @expose("/")
+    async def index(self, request: Request):
+        async with async_session_maker() as session:
+            total_users = (await session.execute(select(func.count(User.telegram_id)))).scalar_one()
+            premium_by_day = (
+                await session.execute(
+                    select(Premium.purchase_date, func.count(Premium.id))
+                    .group_by(Premium.purchase_date)
+                    .order_by(Premium.purchase_date)
+                )
+            ).all()
+        premium_series = [
+            {"date": row[0].strftime("%d.%m"), "count": row[1]} for row in premium_by_day
+        ]
+        context = {
+            "request": request,
+            "total_users": total_users,
+            "premium_series": premium_series,
+        }
+        return self._templates.TemplateResponse("admin/dashboard.html", context)
+
+
 def init_sqladmin(app) -> Admin:
     auth_backend = BasicAuth(secret_key=settings.ADMIN_SECRET)
     admin = Admin(app, engine, authentication_backend=auth_backend, base_url="/admin")
+    # Регистрируем корневой дашборд первым — он будет открываться на /admin/
+    admin.add_view(DashboardRoot)
     admin.add_view(AdminUserAdmin)
     admin.add_view(UserAdmin)
     admin.add_view(PremiumAdmin)

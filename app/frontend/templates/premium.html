@@ -2,6 +2,17 @@
 {% block title %}Премиум{% endblock %}
 {% block styles %}
 <link rel="stylesheet" href="/static/css/webapp.css?v=9">
+<style>
+  .payment-container-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+</style>
 {% endblock %}
 {% block content %}
 <div class="page premium-page">
@@ -31,10 +42,11 @@
       </div>
     </section>
   </main>
+  <div id="payment-container" style="display:none"></div>
 </div>
 {% endblock %}
 {% block scripts %}
 <script type="module" src="/static/js/haptics.js"></script>
 <script type="module" src="/static/js/auth.js"></script>
-<script type="module" src="/static/js/premium.js?v=1"></script>
+<script type="module" src="/static/js/premium.js?v=2"></script>
 {% endblock %}

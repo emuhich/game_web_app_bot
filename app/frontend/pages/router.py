@@ -14,7 +14,6 @@ from app.users.service import UserService
 from app.exceptions import CategoryNotFoundException
 from app.config import settings
 
-# Web-фронтенд теперь доступен с корня ("/"), поэтому prefix оставляем пустым
 router_webapp = APIRouter(prefix="", tags=["Frontend"])
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / 'templates'
@@ -22,7 +21,6 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
 async def _get_user_context(request: Request, telegram_id: Optional[int]):
-    # если параметр не передан, пробуем взять из сессии (после /api/auth)
     if not telegram_id:
         try:
             sid = request.session.get('telegram_id')
@@ -55,38 +53,111 @@ async def premium_page(request: Request, telegram_id: Optional[int] = None):
     return templates.TemplateResponse('premium.html', {"request": request, **ctx, "settings": settings})
 
 
-@router_webapp.get('/api/premium/invoice', response_class=JSONResponse)
-async def get_premium_invoice(telegram_id: int):
-    """Создаёт invoice_link через Bot API и возвращает invoice_url для WebApp.openInvoice.
+@router_webapp.get('/api/premium/status', response_class=JSONResponse)
+async def premium_status(request: Request, telegram_id: Optional[int] = None):
+    """Возвращает текущий статус премиума для авторизованного пользователя.
 
-    Сейчас используем Telegram Stars: валюта XTR и тестовая цена 1 звезда.
-    Бот по webhook обрабатывает successful_payment и активирует подписку.
+    Использует telegram_id из сессии (после /api/auth) или из параметра.
     """
-    if not settings.BOT_TOKEN:
-        raise HTTPException(status_code=500, detail="BOT_TOKEN is not configured")
+    if not telegram_id:
+        try:
+            sid = request.session.get('telegram_id')
+            telegram_id = int(sid) if sid else None
+        except Exception:
+            telegram_id = None
+    if not telegram_id:
+        raise HTTPException(status_code=401, detail='Not authenticated')
 
-    api_url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/createInvoiceLink"
-
-    # Жёстко кодируем: 1 год премиума за 1 звезду (XTR)
-    payload = {
-        "title": "Премиум подписка",
-        "description": "1 год доступа ко всем премиум-играм",
-        "payload": f"premium_year_{telegram_id}",
-        # Для звёзд provider_token не используется, но поле должно существовать
-        "provider_token": getattr(settings, "PAYMENTS_PROVIDER_TOKEN", ""),
-        "currency": "XTR",  # Telegram Stars
-        "prices": [
-            {"label": "Подписка", "amount": 1},  # 1 звезда
-        ],
+    user, premium = await UserService.get_profile(telegram_id)
+    return {
+        "telegram_id": telegram_id,
+        "premium_active": bool(premium),
+        "premium_expire_date": premium.expire_date.isoformat() if premium else None,
     }
 
-    async with httpx.AsyncClient(timeout=10) as client:
-        resp = await client.post(api_url, json=payload)
-    data = resp.json()
-    if not data.get("ok"):
-        raise HTTPException(status_code=500, detail="Failed to create invoice")
 
-    return {"invoice_url": data["result"]}
+@router_webapp.post('/api/premium/payment', response_class=JSONResponse)
+async def create_premium_payment(request: Request):
+    """Создаёт платёж в YooKassa с embedded-виджетом и возвращает payment_id и confirmation_token.
+
+    Далее фронт инициализирует YooKassaCheckoutWidget внутри WebApp.
+    """
+    if not settings.YOOKASSA_SHOP_ID or not settings.YOOKASSA_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="YooKassa не сконфигурирована")
+
+    payload = await request.json()
+    duration_days = int(payload.get("duration_days", 365))
+    telegram_id = payload.get("telegram_id")
+    if not telegram_id:
+        # пробуем взять из сессии на всякий случай
+        try:
+            sid = request.session.get('telegram_id')
+            telegram_id = int(sid) if sid else None
+        except Exception:
+            telegram_id = None
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="telegram_id is required")
+
+    amount_value = "2.00"  # TODO: вынести в настройки
+
+    auth = (settings.YOOKASSA_SHOP_ID, settings.YOOKASSA_SECRET_KEY)
+    headers = {
+        "Idempotence-Key": f"premium-{telegram_id}-{duration_days}",
+        "Content-Type": "application/json",
+    }
+
+    body = {
+        "amount": {"value": amount_value, "currency": "RUB"},
+        "confirmation": {"type": "embedded"},
+        "capture": True,
+        "description": f"Premium {duration_days} days for {telegram_id}",
+        "metadata": {"telegram_id": telegram_id, "duration_days": duration_days},
+    }
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        resp = await client.post("https://api.yookassa.ru/v3/payments", json=body, auth=auth, headers=headers)
+
+    if resp.status_code >= 400:
+        try:
+            data = resp.json()
+        except Exception:
+            data = {"error": resp.text}
+        raise HTTPException(status_code=500, detail={"message": "YooKassa error", "data": data})
+
+    payment = resp.json()
+    confirmation = payment.get("confirmation", {})
+    if confirmation.get("type") != "embedded":
+        raise HTTPException(status_code=500, detail="Unexpected confirmation type from YooKassa")
+
+    return {
+        "id": payment.get("id"),
+        "status": payment.get("status"),
+        "confirmation_token": confirmation.get("confirmation_token"),
+    }
+
+
+@router_webapp.post('/api/yookassa/webhook', response_class=JSONResponse)
+async def yookassa_webhook(request: Request):
+    """Принимает webhooks от YooKassa и активирует подписку после payment.succeeded.
+
+    В бою нужно валидировать подпись webhook'а.
+    """
+    event = await request.json()
+    event_type = event.get("event")
+    obj = event.get("object") or {}
+
+    if event_type == "payment.succeeded":
+        metadata = obj.get("metadata") or {}
+        telegram_id = metadata.get("telegram_id")
+        duration_days = int(metadata.get("duration_days", 365))
+        if telegram_id:
+            try:
+                await UserService.extend_premium(telegram_id=int(telegram_id), duration_days=duration_days)
+            except Exception:
+                # логика логирования/алертов
+                pass
+
+    return {"ok": True}
 
 
 @router_webapp.get('/honesty', response_class=HTMLResponse)
