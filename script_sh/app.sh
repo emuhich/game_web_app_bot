@@ -7,4 +7,9 @@ alembic upgrade head
 # создаём/обновляем админа из переменных окружения
 python /api/create_admin.py || echo "[WARN] create_admin.py failed"
 
-gunicorn app.main:app --workers 4 --bind 0.0.0.0:8000 --worker-class uvicorn.workers.UvicornWorker
+# Запускаем gunicorn/uvicorn, доверяя X-Forwarded-* заголовкам от всех прокси
+exec gunicorn app.main:app \
+  --workers 4 \
+  --bind 0.0.0.0:8000 \
+  --worker-class uvicorn.workers.UvicornWorker \
+  --forwarded-allow-ips="*"
