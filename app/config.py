@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     YOOKASSA_SECRET_KEY: str = ""
     YOOKASSA_TEST_MODE: bool = True
 
+    # Логирование
+    LOG_LEVEL: str = "INFO"          # Базовый уровень логирования
+    LOG_FORMAT: str = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+    LOG_DIR: Path = Path("logs")     # Каталог для логов внутри проекта/контейнера
+    LOG_TO_CONSOLE: bool = True       # Логировать ли в stdout
+    LOG_TO_FILE: bool = True          # Логировать ли в файлы
+
     # Path constants
     APP_DIR: Path = Path(__file__).resolve().parent  # /app
     PROJECT_ROOT: Path = APP_DIR.parent              # project root

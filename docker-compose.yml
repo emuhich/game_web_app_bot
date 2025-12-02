@@ -58,6 +58,7 @@ services:
       retries: 10
     volumes:
       - ./app/media:/api/app/media
+      - ./logs:/api/logs
 
 
 volumes:
