@@ -1,5 +1,6 @@
 import { haptics } from '/static/js/haptics.js';
 import { getVerifiedId } from '/static/js/auth.js';
+import { showDevOverlay } from '/static/js/popups.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const stack = document.getElementById('cards-stack');
@@ -13,6 +14,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const SWIPE_THRESHOLD_RATIO = 0.5;
   const SWIPE_OUT_DURATION_MS = 340;
   const MAX_ROT = 10;
+
+  // Показываем подсказку о свайпе только при первом заходе в игру
+  try {
+    const HINT_KEY = 'honesty_swipe_hint_shown_v1';
+    const already = window.localStorage.getItem(HINT_KEY);
+    if (!already) {
+      // Небольшая задержка, чтобы не мигало вместе с анимацией первой карточки
+      setTimeout(() => {
+        showDevOverlay();
+        window.localStorage.setItem(HINT_KEY, '1');
+      }, 300);
+    }
+  } catch (e) {
+    console.warn('Не удалось сохранить флаг показа подсказки свайпа', e);
+  }
 
   const relayout = () => {
     const cards = Array.from(stack.querySelectorAll('.question-card'));

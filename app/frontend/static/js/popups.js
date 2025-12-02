@@ -2,20 +2,36 @@
 import { haptics } from './haptics.js';
 
 export function showDevOverlay() {
-  haptics.impact('medium');
+  // Обучающий попап: как играть в карточки (свайпы)
+  try {
+    haptics.impact('medium');
+  } catch {}
+
   const overlay = document.createElement('div');
   overlay.className = 'swipe-hint-overlay';
   overlay.innerHTML = `
     <div class="swipe-hint" role="dialog" aria-modal="true">
-      <h3 class="hint-title">Скоро</h3>
-      <p class="hint-text">Эта игра пока в разработке. Совсем скоро она появится в приложении!</p>
-      <div class="hint-gesture"><span class="hand">🚧</span></div>
+      <h3 class="hint-title">Как играть</h3>
+      <p class="hint-text">Смахивай карточки влево или вправо, чтобы переходить к следующему вопросу.</p>
+      <div class="hint-gesture"><span class="hand">👆</span><span class="arrow">⇄</span></div>
       <button class="hint-close" type="button">Понятно</button>
     </div>`;
+
   document.body.appendChild(overlay);
+
   const closeBtn = overlay.querySelector('.hint-close');
-  const close = () => { haptics.impact('light'); overlay.classList.add('fade-out'); setTimeout(() => overlay.remove(), 220); };
+  const close = () => {
+    try { haptics.impact('light'); } catch {}
+    overlay.classList.add('fade-out');
+    setTimeout(() => overlay.remove(), 220);
+  };
+
   closeBtn?.addEventListener('click', close);
+
+  // закрытие по клику вне окна
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
 }
 
 export function showPremiumPopup(onBuy) {
@@ -37,4 +53,3 @@ export function showPremiumPopup(onBuy) {
   closeBtn?.addEventListener('click', close);
   buyBtn?.addEventListener('click', () => { haptics.impact('medium'); onBuy?.(); });
 }
-
