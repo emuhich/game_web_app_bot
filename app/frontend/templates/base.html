@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>{% block title %}Мое FastAPI Приложение{% endblock %}</title>
+    <title>{% block title %}Моё FastAPI Приложение{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/base.css">
     {% block styles %}{% endblock %}
-    <style>
-      html, body { height: 100%; overscroll-behavior: none; margin: 0; }
-      body { touch-action: manipulation; overflow: hidden; }
-      * { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-    </style>
 </head>
 <body class="{% block body_class %}{% endblock %}">
 {% block content %} {% endblock %}

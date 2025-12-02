@@ -1,0 +1,46 @@
+/* Базовые глобальные стили для WebApp */
+
+/* Подключение кастомных шрифтов */
+@font-face {
+  font-family: 'AppTitleFont';
+  src: url('/static/fonts/fa-brands-400.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'AppQuestionFont';
+  src: url('/static/fonts/fa-solid-900.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+html,
+body {
+  height: 100%;
+  overscroll-behavior: none;
+  margin: 0;
+}
+
+body {
+  touch-action: manipulation;
+  overflow: hidden;
+}
+
+* {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Классы для использования шрифтов */
+.title-font {
+  font-family: 'AppTitleFont', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.question-font {
+  font-family: 'AppQuestionFont', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+

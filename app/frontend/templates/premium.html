@@ -17,26 +17,26 @@
 {% block content %}
 <div class="page premium-page">
   <header class="page-header">
-    <h2 class="page-title">Премиум</h2>
+    <h2 class="page-title title-font">Премиум</h2>
   </header>
   <main class="page-main premium-main">
     <section class="premium-card">
       <div class="premium-card-inner">
         {% if premium %}
-        <p class="premium-status">У тебя уже есть премиум</p>
-        <p class="premium-expire">Активен до {{ premium.expire_date.strftime('%d.%m.%Y') }}</p>
-        <p class="premium-subtext">Новая подписка станет доступна после окончания текущей.</p>
+        <p class="premium-status question-font">У тебя уже есть премиум</p>
+        <p class="premium-expire question-font">Активен до {{ premium.expire_date.strftime('%d.%m.%Y') }}</p>
+        <p class="premium-subtext question-font">Новая подписка станет доступна после окончания текущей.</p>
         {% else %}
-        <p class="premium-status">Открой все премиум-категории и функции.</p>
-        <p class="premium-subtext">Ежегодная подписка с полным доступом ко всем премиум-играм и категориям.</p>
+        <p class="premium-status question-font">Открой все премиум-категории и функции.</p>
+        <p class="premium-subtext question-font">Ежегодная подписка с полным доступом ко всем премиум-играм и категориям.</p>
         <div class="premium-plans">
-          <button type="button" class="premium-plan is-active" data-duration="365">
+          <button type="button" class="premium-plan is-active question-font" data-duration="365">
             <span class="plan-title">1 год</span>
             <span class="plan-price">229 ₽</span>
           </button>
         </div>
         <div class="premium-actions">
-          <button type="button" id="premium-buy" class="primary-btn full">Купить премиум</button>
+          <button type="button" id="premium-buy" class="primary-btn full question-font">Купить премиум</button>
         </div>
         {% endif %}
       </div>

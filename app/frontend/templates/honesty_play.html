@@ -12,9 +12,9 @@
     <div class="cards-stack" id="cards-stack">
       {% for q in questions %}
       <article class="question-card" data-index="{{ loop.index0 }}">
-        <div class="q-header">{{ category.name }}</div>
+        <div class="q-header title-font">{{ category.name }}</div>
         <div class="q-content">
-          <p class="q-text">{{ q.text }}</p>
+          <p class="q-text question-font">{{ q.text }}</p>
         </div>
       </article>
       {% endfor %}

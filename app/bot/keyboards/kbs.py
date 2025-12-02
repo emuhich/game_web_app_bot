@@ -1,5 +1,5 @@
-from aiogram.types import ReplyKeyboardMarkup, WebAppInfo, InlineKeyboardMarkup
-from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
+from aiogram.types import ReplyKeyboardMarkup, WebAppInfo
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.config import settings
 
