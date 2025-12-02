@@ -1,6 +1,6 @@
 import {haptics} from '/static/js/haptics.js';
 import {ensureAuth, getVerifiedId} from '/static/js/auth.js';
-import {showDevOverlay} from '/static/js/popups.js';
+import {showDevOverlay, showInDevelopmentPopup} from '/static/js/popups.js';
 
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isDev = activeCard.dataset.inDevelopment === '1';
         haptics.impact(isDev ? 'light' : 'medium');
         if (isDev) {
-            showDevOverlay();
+            showInDevelopmentPopup();
             return;
         }
         const code = activeCard.dataset.code;
