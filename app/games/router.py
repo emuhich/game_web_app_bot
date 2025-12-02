@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from fastapi_cache.decorator import cache
 
 GAMES = [
     {
@@ -31,5 +32,6 @@ router = APIRouter(prefix="/games", tags=["Games"])
 
 
 @router.get("/", response_model=list[dict])
+@cache(expire=60)
 async def list_games():
     return GAMES

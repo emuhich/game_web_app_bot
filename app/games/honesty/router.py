@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Query
+from fastapi_cache.decorator import cache
 
 from app.games.honesty.schemas import (
     HonCategoryRead,
@@ -10,6 +11,7 @@ router = APIRouter(prefix='/games/honesty', tags=['Honesty'])
 
 
 @router.get('/categories', response_model=list[HonCategoryRead])
+@cache(expire=60)
 async def list_categories(include_hidden: bool = Query(False, description="Показать скрытые категории")):
     categories = await HonestyService.get_visible_categories()
     return [HonCategoryRead.model_validate(c, from_attributes=True) for c in categories]

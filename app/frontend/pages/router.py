@@ -8,6 +8,7 @@ import httpx
 import hmac
 import hashlib
 from urllib.parse import parse_qs
+from fastapi_cache.decorator import cache
 
 from app.games.honesty.service import HonestyService
 from app.users.service import UserService
@@ -54,6 +55,7 @@ async def premium_page(request: Request, telegram_id: Optional[int] = None):
 
 
 @router_webapp.get('/api/premium/status', response_class=JSONResponse)
+@cache(expire=10)
 async def premium_status(request: Request, telegram_id: Optional[int] = None):
     """Возвращает текущий статус премиума для авторизованного пользователя.
 

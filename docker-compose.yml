@@ -1,0 +1,65 @@
+version: '3.7'
+
+services:
+  db:
+    container_name: database
+    image: postgres:15
+    environment:
+      POSTGRES_DB: $DB_NAME
+      POSTGRES_USER: $DB_USER
+      POSTGRES_PASSWORD: $DB_PASSWORD
+      POSTGRES_PASSWORD_ENCRYPTION: scram-sha-256
+    restart: always
+    ports:
+      - "5439:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - ".env"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    container_name: redis
+    image: redis:7
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/var/lib/redis/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  fastapi:
+    build:
+      context: .
+    container_name: fastapi
+    command: ["/api/script_sh/app.sh"]
+    ports:
+      - "8000:8000"
+    restart: always
+    env_file:
+      - ".env"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - ./app/media:/api/app/media
+
+
+volumes:
+    postgres_data:
+    redis_data:

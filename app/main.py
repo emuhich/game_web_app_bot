@@ -83,5 +83,11 @@ async def webhook(request: Request) -> None:
     logging.info("Update processed")
 
 
+@app.get('/health')
+async def health() -> dict:
+    """Простой healthcheck: возвращает 200 и минимум информации."""
+    return {"status": "ok"}
+
+
 if __name__ == "__main__":
     uvicorn.run("app.main:app", reload=True)

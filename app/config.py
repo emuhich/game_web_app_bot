@@ -3,20 +3,23 @@ from pathlib import Path
 
 
 class Settings(BaseSettings):
+
     BOT_TOKEN: str = "your_bot_token"
     BASE_SITE: str = "https://yourdomain.com"
     ADMIN_ID: int = 123456789
+
     DB_HOST: str = "localhost"
     DB_PORT: int = 5432
     DB_USER: str = "postgres"
     DB_PASSWORD: str = "postgres"
     DB_NAME: str = "postgres"
+
     ALGORITHM: str = "HS256"
     SECRET_KEY: str = "secret"
+
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     CACHE_TIMEOUT: int = 30
-    PAYMENTS_PROVIDER_TOKEN: str = "your_payments_provider_token"
     # Добавлены недостающие ключи для админ-панели/auth
     ADMIN_SECRET: str = "supersecretkey_change_me"
     ADMIN_USERNAME: str = "admin"
