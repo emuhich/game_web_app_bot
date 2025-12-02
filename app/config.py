@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     YOOKASSA_SECRET_KEY: str = ""
     YOOKASSA_TEST_MODE: bool = True
 
+    PREMIUM_PRICE_RUB: float = 229.0
+
     # Логирование
     LOG_LEVEL: str = "INFO"          # Базовый уровень логирования
     LOG_FORMAT: str = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"

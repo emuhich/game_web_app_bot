@@ -1,19 +1,21 @@
+import hashlib
+import hmac
+import random
+import uuid
+from pathlib import Path
+from typing import Optional
+from urllib.parse import parse_qs
+
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from typing import Optional
-from pathlib import Path
-import random
-import httpx
-import hmac
-import hashlib
-from urllib.parse import parse_qs
 from fastapi_cache.decorator import cache
+from yookassa import Configuration, Payment
 
+from app.config import settings
+from app.exceptions import CategoryNotFoundException
 from app.games.honesty.service import HonestyService
 from app.users.service import UserService
-from app.exceptions import CategoryNotFoundException
-from app.config import settings
 
 router_webapp = APIRouter(prefix="", tags=["Frontend"])
 
@@ -80,10 +82,7 @@ async def premium_status(request: Request, telegram_id: Optional[int] = None):
 
 @router_webapp.post('/api/premium/payment', response_class=JSONResponse)
 async def create_premium_payment(request: Request):
-    """Создаёт платёж в YooKassa с embedded-виджетом и возвращает payment_id и confirmation_token.
-
-    Далее фронт инициализирует YooKassaCheckoutWidget внутри WebApp.
-    """
+    """Создаёт платёж YooKassa (embedded) через официальный SDK."""
     try:
         payload = await request.json()
     except Exception:
@@ -95,7 +94,6 @@ async def create_premium_payment(request: Request):
     duration_days = int(payload.get("duration_days", 365))
     telegram_id = payload.get("telegram_id")
     if not telegram_id:
-        # пробуем взять из сессии на всякий случай
         try:
             sid = request.session.get('telegram_id')
             telegram_id = int(sid) if sid else None
@@ -104,41 +102,45 @@ async def create_premium_payment(request: Request):
     if not telegram_id:
         raise HTTPException(status_code=400, detail="telegram_id is required")
 
-    amount_value = "2.00"  # TODO: вынести в настройки
+    amount_value = settings.PREMIUM_PRICE_RUB
+    amount_str = f"{amount_value:.2f}"
 
-    auth = (settings.YOOKASSA_SHOP_ID, settings.YOOKASSA_SECRET_KEY)
-    headers = {
-        "Idempotence-Key": f"premium-{telegram_id}-{duration_days}",
-        "Content-Type": "application/json",
-    }
+    Configuration.configure(settings.YOOKASSA_SHOP_ID, settings.YOOKASSA_SECRET_KEY)
 
-    body = {
-        "amount": {"value": amount_value, "currency": "RUB"},
-        "confirmation": {"type": "embedded"},
+    payment_payload = {
+        "amount": {"value": amount_str, "currency": "RUB"},
         "capture": True,
+        "confirmation": {
+            "type": "embedded",
+        },
         "description": f"Premium {duration_days} days for {telegram_id}",
-        "metadata": {"telegram_id": telegram_id, "duration_days": duration_days},
+        "metadata": {
+            "telegram_id": telegram_id,
+            "duration_days": duration_days,
+        },
     }
 
-    async with httpx.AsyncClient(timeout=15) as client:
-        resp = await client.post("https://api.yookassa.ru/v3/payments", json=body, auth=auth, headers=headers)
+    idem_key = f"premium-{telegram_id}-{duration_days}-{uuid.uuid4()}"
 
-    if resp.status_code >= 400:
-        try:
-            data = resp.json()
-        except Exception:
-            data = {"error": resp.text}
-        raise HTTPException(status_code=500, detail={"message": "YooKassa error", "data": data})
+    try:
+        payment = Payment.create(payment_payload, idem_key)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"YooKassa error: {exc}")
 
-    payment = resp.json()
-    confirmation = payment.get("confirmation", {})
-    if confirmation.get("type") != "embedded":
-        raise HTTPException(status_code=500, detail=f"Unexpected confirmation type from YooKassa ({confirmation.get('type')})")
+    confirmation = payment.confirmation
+    confirmation_type = getattr(confirmation, 'type', None)
+    confirmation_token = getattr(confirmation, 'confirmation_token', None)
+    if isinstance(confirmation, dict):
+        confirmation_type = confirmation.get('type', confirmation_type)
+        confirmation_token = confirmation.get('confirmation_token', confirmation_token)
+
+    if confirmation_type != 'embedded' or not confirmation_token:
+        raise HTTPException(status_code=500, detail="Unexpected confirmation type from YooKassa")
 
     return {
-        "id": payment.get("id"),
-        "status": payment.get("status"),
-        "confirmation_token": confirmation.get("confirmation_token"),
+        "id": payment.id,
+        "status": payment.status,
+        "confirmation_token": confirmation_token,
     }
 
 
