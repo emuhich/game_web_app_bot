@@ -1,6 +1,6 @@
 import logging
-from logging.handlers import RotatingFileHandler
 from contextlib import asynccontextmanager
+from logging.handlers import RotatingFileHandler
 
 import redis.asyncio as redis_async
 import uvicorn
@@ -10,8 +10,6 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.staticfiles import StaticFiles
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
 
 from app.admin.views import init_sqladmin
 from app.bot.create_bot import bot, dp, stop_bot, start_bot
@@ -21,6 +19,7 @@ from app.frontend.pages.router import router_webapp
 from app.games.honesty.router import router as honesty_router
 from app.games.router import router as games_router
 from app.users.router import router as users_router
+from starlette.middleware.base import BaseHTTPMiddleware
 
 
 def setup_logging() -> None:
@@ -74,50 +73,6 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 
-class AdminHttpsFixMiddleware(BaseHTTPMiddleware):
-    """Фикс для mixed content в админке sqladmin.
-
-    Для HTML-ответов по путям, начинающимся с /admin, переписывает
-    все вхождения "http://flashq.online/" в "https://flashq.online/".
-    Это устраняет проблему, когда шаблон рендерит скрипты/стили с http-схемой.
-    """
-
-    async def dispatch(self, request: Request, call_next):
-        response = await call_next(request)
-
-        # Обрабатываем только HTML-ответы
-        content_type = response.headers.get("content-type", "")
-        if "text/html" not in content_type:
-            return response
-
-        # И только админку
-        if not request.url.path.startswith("/admin"):
-            return response
-
-        # Считываем тело ответа
-        body = b""
-        if hasattr(response, "body") and response.body is not None:
-            body = response.body
-        elif hasattr(response, "body_iterator"):
-            async for chunk in response.body_iterator:  # type: ignore[attr-defined]
-                body += chunk
-
-        try:
-            text = body.decode("utf-8")
-        except UnicodeDecodeError:
-            # Если не utf-8, не трогаем
-            return response
-
-        fixed = text.replace("http://flashq.online/", "https://flashq.online/")
-
-        return Response(
-            content=fixed,
-            status_code=response.status_code,
-            headers=dict(response.headers),
-            media_type="text/html",
-        )
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting bot & cache setup...")
@@ -143,13 +98,18 @@ async def lifespan(app: FastAPI):
     logger.info("Bot shutdown complete")
 
 
+class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.headers.get("x-forwarded-proto") == "https":
+            request.scope["scheme"] = "https"
+        response = await call_next(request)
+        return response
+
+
 app = FastAPI(lifespan=lifespan)
 
-# Фиксим http:// → https:// в HTML админки, чтобы убрать mixed content
-app.add_middleware(AdminHttpsFixMiddleware)
-
+app.add_middleware(HTTPSRedirectMiddleware)
 app.add_middleware(SessionMiddleware, secret_key=settings.ADMIN_SECRET)
-
 
 STATIC_DIR = settings.STATIC_DIR
 MEDIA_DIR = settings.MEDIA_DIR
