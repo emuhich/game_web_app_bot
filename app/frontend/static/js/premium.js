@@ -1,21 +1,5 @@
 import { haptics } from '/static/js/haptics.js';
-import { getVerifiedId, ensureAuth } from '/static/js/auth.js';
-
-// Загружаем скрипт YooKassa виджета динамически, если он ещё не подключен
-function loadYooKassaScript() {
-  return new Promise((resolve, reject) => {
-    if (window.YooKassaCheckoutWidget) {
-      resolve();
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = 'https://yookassa.ru/checkout-widget/v1/checkout-widget.js';
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Не удалось загрузить виджет оплаты'));
-    document.head.appendChild(script);
-  });
-}
+import { ensureAuth, getVerifiedId } from '/static/js/auth.js';
 
 async function refreshPremiumStatusUI() {
   try {
@@ -23,7 +7,6 @@ async function refreshPremiumStatusUI() {
     if (!res.ok) return;
     const data = await res.json();
 
-    // Обновляем глобальный кэш авторизации, чтобы другие части фронта видели актуальный премиум
     if (!window.__verifiedAuth) {
       window.__verifiedAuth = { ok: true, telegram_id: data.telegram_id, profile: {} };
     }
@@ -35,7 +18,6 @@ async function refreshPremiumStatusUI() {
 
     if (!data.premium_active) return;
 
-    // Обновляем DOM на странице премиума
     const card = document.querySelector('.premium-card-inner');
     if (!card) return;
 
@@ -77,7 +59,11 @@ async function refreshPremiumStatusUI() {
 }
 
 async function startPayment(telegramId, durationDays) {
-  await loadYooKassaScript();
+  if (typeof window.YooMoneyCheckoutWidget !== 'function') {
+    console.error('YooMoneyCheckoutWidget не найден в window:', window.YooMoneyCheckoutWidget);
+    alert('Платёжный виджет ЮKassa недоступен. Попробуйте обновить страницу или отключить блокировщики.');
+    return;
+  }
 
   const res = await fetch('/api/premium/payment', {
     method: 'POST',
@@ -96,72 +82,78 @@ async function startPayment(telegramId, durationDays) {
     throw new Error('Нет confirmation_token от YooKassa');
   }
 
-  const containerId = 'payment-container';
-  let container = document.getElementById(containerId);
-  if (!container) {
-    container = document.createElement('div');
-    container.id = containerId;
-    container.className = 'payment-container-overlay';
-    document.body.appendChild(container);
+  const overlay = document.getElementById('payment-form');
+  const containerId = 'payment-form-inner';
+  const container = document.getElementById(containerId);
+  if (!overlay || !container) {
+    alert('Контейнер для оплаты не найден на странице');
+    return;
   }
+  overlay.style.display = 'flex';
 
-  const checkout = new window.YooKassaCheckoutWidget({
+  const returnUrl = window.location.href;
+  const tg = window.Telegram?.WebApp;
+
+  const checkout = new window.YooMoneyCheckoutWidget({
     confirmation_token: token,
+    return_url: returnUrl,
     error_callback: function (error) {
       console.error('Payment error', error);
-      haptics.notify('error');
-    },
-    success_callback: async function () {
-      haptics.notify('success');
-      const tg = window.Telegram?.WebApp;
+      haptics?.notify?.('error');
+      // При ошибке скрываем оверлей, чтобы пользователь мог попробовать ещё раз
+      overlay.style.display = 'none';
       tg?.showPopup?.({
-        title: 'Успешно',
-        message: 'Оплата прошла, премиум скоро активируется.',
+        title: 'Ошибка оплаты',
+        message: 'Не удалось провести оплату. Попробуйте ещё раз.',
         buttons: [{ type: 'ok' }],
       });
-      // После успешной оплаты пробуем обновить статус премиума и UI
-      await refreshPremiumStatusUI();
+    },
+    success_callback: async function () {
+      // YooKassa перенаправит на return_url после завершения, но для WebApp покажем явный popup
+      haptics?.notify?.('success');
+      tg?.showPopup?.({
+        title: 'Успешно',
+        message: 'Оплата прошла, премиум будет активирован в течение минуты.',
+        buttons: [{ type: 'ok' }],
+      });
+      try {
+        await refreshPremiumStatusUI();
+      } finally {
+        overlay.style.display = 'none';
+      }
     },
   });
 
   checkout.render(containerId);
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  await ensureAuth();
-  const tg = window.Telegram?.WebApp;
-  const verifiedId = getVerifiedId();
+// Инициализация страницы премиума
 
-  const planButtons = Array.from(document.querySelectorAll('.premium-plan'));
+document.addEventListener('DOMContentLoaded', () => {
   const buyBtn = document.getElementById('premium-buy');
-
-  planButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      planButtons.forEach((b) => b.classList.remove('is-active'));
-      btn.classList.add('is-active');
-      haptics.selection();
-    });
-  });
-
   if (!buyBtn) return;
 
   buyBtn.addEventListener('click', async () => {
-    haptics.impact('medium');
-    const active = document.querySelector('.premium-plan.is-active');
-    const duration = active?.dataset.duration || '365';
-
-    if (!verifiedId) {
-      tg?.showAlert?.('Авторизация не выполнена');
-      haptics.impact('rigid');
-      return;
-    }
-
     try {
-      await startPayment(verifiedId, duration);
+      const auth = await ensureAuth();
+      if (!auth?.ok) {
+        alert('Не удалось авторизоваться через Telegram WebApp');
+        return;
+      }
+      const telegramId = getVerifiedId();
+      if (!telegramId) {
+        alert('Не удалось определить Telegram ID');
+        return;
+      }
+      const durationBtn = document.querySelector('.premium-plan.is-active');
+      const durationDays = durationBtn ? durationBtn.dataset.duration : '365';
+      await startPayment(telegramId, durationDays);
     } catch (e) {
-      console.error(e);
-      tg?.showAlert?.('Не удалось создать платёж. Попробуй позже.');
-      haptics.impact('light');
+      console.error('[premium] Ошибка оплаты:', e);
+      alert(e.message || 'Ошибка оплаты');
     }
   });
+
+  // При заходе на страницу сразу обновим UI премиума по статусу
+  refreshPremiumStatusUI();
 });

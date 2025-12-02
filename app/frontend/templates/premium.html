@@ -11,6 +11,19 @@
     align-items: center;
     justify-content: center;
     z-index: 9999;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  /* Внутренний контейнер для виджета, чтобы форма была с нормальным фоном и не "висела" прозрачно */
+  .payment-widget-inner {
+    background: #ffffff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
   }
 </style>
 {% endblock %}
@@ -42,11 +55,12 @@
       </div>
     </section>
   </main>
-  <div id="payment-container" style="display:none"></div>
+  <div id="payment-form" class="payment-container-overlay" style="display:none">
+    <div class="payment-widget-inner" id="payment-form-inner"></div>
+  </div>
 </div>
 {% endblock %}
 {% block scripts %}
-<script type="module" src="/static/js/haptics.js"></script>
-<script type="module" src="/static/js/auth.js"></script>
-<script type="module" src="/static/js/premium.js?v=2"></script>
+  <script src="https://yookassa.ru/checkout-widget/v1/checkout-widget.js"></script>
+  <script type="module" src="/static/js/premium.js?v=4"></script>
 {% endblock %}

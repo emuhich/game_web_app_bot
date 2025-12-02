@@ -84,10 +84,14 @@ async def create_premium_payment(request: Request):
 
     Далее фронт инициализирует YooKassaCheckoutWidget внутри WebApp.
     """
+    try:
+        payload = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Некорректный JSON в теле запроса")
+
     if not settings.YOOKASSA_SHOP_ID or not settings.YOOKASSA_SECRET_KEY:
         raise HTTPException(status_code=500, detail="YooKassa не сконфигурирована")
 
-    payload = await request.json()
     duration_days = int(payload.get("duration_days", 365))
     telegram_id = payload.get("telegram_id")
     if not telegram_id:
@@ -129,7 +133,7 @@ async def create_premium_payment(request: Request):
     payment = resp.json()
     confirmation = payment.get("confirmation", {})
     if confirmation.get("type") != "embedded":
-        raise HTTPException(status_code=500, detail="Unexpected confirmation type from YooKassa")
+        raise HTTPException(status_code=500, detail=f"Unexpected confirmation type from YooKassa ({confirmation.get('type')})")
 
     return {
         "id": payment.get("id"),
