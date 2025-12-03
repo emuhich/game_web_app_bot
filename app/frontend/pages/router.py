@@ -118,6 +118,24 @@ async def create_premium_payment(request: Request):
             "telegram_id": telegram_id,
             "duration_days": duration_days,
         },
+        "receipt": {
+            "customer": {
+                "email": "egor190420000@gmail.com",
+            },
+            "items": [
+                {
+                    "description": "Подписка",
+                    "quantity": "1.00",
+                    "amount": {
+                        "value": amount_str,
+                        "currency": "RUB"
+                    },
+                    "vat_code": "2",
+                    "payment_mode": "full_payment",
+                    "payment_subject": "commodity",
+                },
+            ]
+        },
     }
 
     idem_key = f"premium-{telegram_id}-{duration_days}-{uuid.uuid4()}"
