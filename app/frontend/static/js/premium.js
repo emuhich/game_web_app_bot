@@ -1,5 +1,58 @@
 import { haptics } from '/static/js/haptics.js';
 import { ensureAuth, getVerifiedId } from '/static/js/auth.js';
+import { showVpnBlockerPopup } from '/static/js/popups.js';
+
+const YOO_WIDGET_TIMEOUT_MS = 6000;
+let vpnPopupShown = false;
+let yooWidgetTimeoutId = null;
+let yooWidgetPollId = null;
+
+function showVpnNoticeOnce(onReload) {
+  if (vpnPopupShown) return;
+  vpnPopupShown = true;
+  showVpnBlockerPopup(onReload);
+}
+
+function clearYooWidgetWatchers() {
+  if (yooWidgetTimeoutId) {
+    clearTimeout(yooWidgetTimeoutId);
+    yooWidgetTimeoutId = null;
+  }
+  if (yooWidgetPollId) {
+    clearInterval(yooWidgetPollId);
+    yooWidgetPollId = null;
+  }
+}
+
+function watchYooWidgetLoad() {
+  if (typeof window.YooMoneyCheckoutWidget === 'function') {
+    clearYooWidgetWatchers();
+    return;
+  }
+
+  const script = document.querySelector('script[src*="checkout-widget"]');
+  const handleReady = () => {
+    clearYooWidgetWatchers();
+  };
+
+  script?.addEventListener('load', handleReady, { once: true });
+  script?.addEventListener('error', () => {
+    clearYooWidgetWatchers();
+    showVpnNoticeOnce(() => window.location.reload());
+  }, { once: true });
+
+  yooWidgetTimeoutId = setTimeout(() => {
+    if (typeof window.YooMoneyCheckoutWidget !== 'function') {
+      showVpnNoticeOnce(() => window.location.reload());
+    }
+  }, YOO_WIDGET_TIMEOUT_MS);
+
+  yooWidgetPollId = setInterval(() => {
+    if (typeof window.YooMoneyCheckoutWidget === 'function') {
+      clearYooWidgetWatchers();
+    }
+  }, 400);
+}
 
 async function refreshPremiumStatusUI() {
   try {
@@ -61,9 +114,11 @@ async function refreshPremiumStatusUI() {
 async function startPayment(telegramId, durationDays) {
   if (typeof window.YooMoneyCheckoutWidget !== 'function') {
     console.error('YooMoneyCheckoutWidget не найден в window:', window.YooMoneyCheckoutWidget);
-    alert('Платёжный виджет ЮKassa недоступен. Попробуйте обновить страницу или отключить блокировщики.');
+    showVpnNoticeOnce(() => window.location.reload());
     return;
   }
+
+  clearYooWidgetWatchers();
 
   const res = await fetch('/api/premium/payment', {
     method: 'POST',
@@ -130,6 +185,8 @@ async function startPayment(telegramId, durationDays) {
 // Инициализация страницы премиума
 
 document.addEventListener('DOMContentLoaded', () => {
+  watchYooWidgetLoad();
+
   const buyBtn = document.getElementById('premium-buy');
   if (!buyBtn) return;
 

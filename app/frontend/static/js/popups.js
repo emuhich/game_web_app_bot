@@ -95,3 +95,48 @@ export function showPremiumPopup(onBuy) {
         onBuy?.();
     });
 }
+
+export function showVpnBlockerPopup(onReload) {
+    try {
+        haptics.impact('light');
+    } catch {
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'premium-popup-overlay vpn-popup-overlay';
+    overlay.innerHTML = `
+    <div class="premium-popup vpn-popup" role="dialog" aria-modal="true">
+      <button type="button" class="premium-popup-close" aria-label="Закрыть">×</button>
+      <h3 class="premium-popup-title">Проблема с оплатой</h3>
+      <p class="premium-popup-text">Платёжный виджет не загрузился. Отключи VPN или прокси и обнови страницу.</p>
+      <div class="premium-popup-actions">
+        <button type="button" class="premium-popup-buy vpn-popup-refresh">Обновить страницу</button>
+      </div>
+    </div>`;
+    document.body.appendChild(overlay);
+
+    const closeBtn = overlay.querySelector('.premium-popup-close');
+    const refreshBtn = overlay.querySelector('.vpn-popup-refresh');
+    const close = () => {
+        overlay.classList.add('fade-out');
+        setTimeout(() => overlay.remove(), 220);
+    };
+
+    closeBtn?.addEventListener('click', close);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) close();
+    });
+
+    refreshBtn?.addEventListener('click', () => {
+        try {
+            haptics.impact('medium');
+        } catch {
+        }
+        close();
+        if (typeof onReload === 'function') {
+            onReload();
+        } else {
+            window.location.reload();
+        }
+    });
+}

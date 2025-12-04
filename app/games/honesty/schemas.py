@@ -21,5 +21,4 @@ class HonCategoryRead(BaseModel):
     is_adult: bool
     questions: List[HonQuestionRead] = Field(default_factory=list)
 
-    # Pydantic v2: убираем Deprecated config и сразу включаем чтение из ORM-объектов
     model_config = ConfigDict(from_attributes=True)

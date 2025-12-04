@@ -3,6 +3,30 @@
   const MAX_RETRIES = 12;
   const RETRY_DELAY = 160; // ms
   let attempt = 0;
+  let backHandler = null;
+  let backDebounce = null;
+  let baseSetupDone = false;
+
+  // Гарантирует ready + запрет вертикальных свайпов + разворачивание, как только WebApp доступен
+  function ensureBaseSetup(force = false) {
+    const tg = window.Telegram?.WebApp;
+    if (!tg) return false;
+    if (baseSetupDone && !force) return true;
+    try {
+      tg.ready?.();
+      tg.disableVerticalSwipes?.();
+      tg.expand?.();
+      baseSetupDone = true;
+      return true;
+    } catch (e) {
+      console.warn('[telegram_init] base setup failed', e);
+      return false;
+    }
+  }
+
+  const baseSetupPoll = setInterval(() => {
+    if (ensureBaseSetup()) clearInterval(baseSetupPoll);
+  }, 150);
 
   function isFsEnabled(tg){
     try {
@@ -24,7 +48,7 @@
   function tryFullscreen(){
     const tg = window.Telegram?.WebApp; if (!tg) return false;
     try {
-      tg.ready?.();
+      ensureBaseSetup(true);
       tg.setHeaderColor?.('bg_color'); // скрываем заголовок
 
       // Сначала поднимаем BottomSheet (если открыт как панель)
@@ -108,8 +132,6 @@
   }
 
   const ROOT_PATHS = ['/']; // оставляем только абсолютный корень как место без BackButton
-  let backHandler = null;
-  let backDebounce = null;
 
   function attachEvents(){
     const tg = window.Telegram?.WebApp; if (!tg) return;
@@ -129,6 +151,7 @@
     attachEvents();
     controlBackButton();
     updateOrientationOverlay();
+    ensureBaseSetup();
     const ok = tryFullscreen();
     if (!ok || !isFsEnabled(window.Telegram?.WebApp)) scheduleRetries(); else maybeSetupFallbackButton();
   }

@@ -8,6 +8,7 @@ from aiogram.types import Update
 from fastapi import FastAPI, Request
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
+from fastapi_cache.backends.inmemory import InMemoryBackend
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.staticfiles import StaticFiles
 
@@ -85,10 +86,14 @@ async def lifespan(app: FastAPI):
                           allowed_updates=dp.resolve_used_update_types(),
                           drop_pending_updates=True)
     logger.info("Webhook set to %s", webhook_url)
-    # Инициализация Redis-кеша FastAPI (замена устаревшего @on_event startup)
-    redis = await redis_async.from_url(settings.REDIS_URL, encoding="utf8", decode_responses=True)
-    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
-    logger.info("FastAPI cache initialized")
+
+    if settings.is_development and settings.DISABLE_CACHE_IN_DEV:
+        FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
+        logger.info("FastAPI cache initialized with InMemoryBackend (dev mode, cache disabled)")
+    else:
+        redis = await redis_async.from_url(settings.REDIS_URL, encoding="utf8", decode_responses=True)
+        FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+        logger.info("FastAPI cache initialized with Redis backend")
     # Переходим к работе приложения
     yield
     # Завершение: удаляем вебхук и останавливаем бота

@@ -798,6 +798,19 @@ body {
   animation: fadeOut .22s ease forwards;
 }
 
+.vpn-popup-overlay {
+  backdrop-filter: blur(6px);
+}
+
+.vpn-popup {
+  background: rgba(0,0,0,0.75);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.vpn-popup-refresh {
+  background: #ff5577;
+}
+
 /* Страница игр */
 .games-page .page-header { padding-top: calc(var(--safe-top) + 12px); }
 .games-page .page-title { margin-top: -4px; }
@@ -978,4 +991,3 @@ body {
   color: rgba(255,255,255,0.85);
   margin: 0;
 }
-

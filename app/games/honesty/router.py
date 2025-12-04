@@ -26,3 +26,4 @@ async def list_questions(category_id: int):
 @router.get('/questions/{question_id}', response_model=HonQuestionRead)
 async def get_question(question_id: int):
     question = await HonestyService.get_question_or_raise(question_id)
+    return HonQuestionRead.model_validate(question, from_attributes=True)

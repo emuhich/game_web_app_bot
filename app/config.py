@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str = "admin123"
 
+    ENVIRONMENT: str = "production"
+    DISABLE_CACHE_IN_DEV: bool = True
+
     # YooKassa config
     YOOKASSA_SHOP_ID: str = ""
     YOOKASSA_SECRET_KEY: str = ""
@@ -63,6 +66,10 @@ class Settings(BaseSettings):
     def get_webhook_url(self) -> str:
         """Возвращает URL вебхука с кодированием специальных символов."""
         return f"{self.BASE_SITE}/webhook"
+
+    @property
+    def is_development(self) -> bool:
+        return self.ENVIRONMENT.lower() in {"development", "dev"}
 
 
 settings = Settings()
