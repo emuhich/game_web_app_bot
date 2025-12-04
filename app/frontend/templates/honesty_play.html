@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}Игра{% endblock %}
-{% block styles %}<link rel="stylesheet" href="/static/css/webapp.css?v=13">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/webapp.css?v={{ build_hash }}">{% endblock %}
 {% block content %}
 <div class="page play-page"
      data-is-premium-category="{{ '1' if category.is_premium else '0' }}"
@@ -23,8 +23,8 @@
 </div>
 {% endblock %}
 {% block scripts %}
-<script type="module" src="/static/js/haptics.js"></script>
-<script type="module" src="/static/js/auth.js"></script>
-<script type="module" src="/static/js/popups.js"></script>
-<script type="module" src="/static/js/honesty_play.js?v=8"></script>
+<script type="module" src="/static/js/haptics.js?v={{ build_hash }}"></script>
+<script type="module" src="/static/js/auth.js?v={{ build_hash }}"></script>
+<script type="module" src="/static/js/popups.js?v={{ build_hash }}"></script>
+<script type="module" src="/static/js/honesty_play.js?v={{ build_hash }}"></script>
 {% endblock %}

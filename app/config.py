@@ -1,5 +1,7 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from datetime import datetime
 from pathlib import Path
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -34,6 +36,7 @@ class Settings(BaseSettings):
     YOOKASSA_TEST_MODE: bool = True
 
     PREMIUM_PRICE_RUB: float = 229.0
+    BUILD_HASH: str = Field(default_factory=lambda: datetime.utcnow().strftime('%Y%m%d%H%M%S'))
 
     # Логирование
     LOG_LEVEL: str = "INFO"          # Базовый уровень логирования

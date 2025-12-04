@@ -21,6 +21,7 @@ router_webapp = APIRouter(prefix="", tags=["Frontend"])
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / 'templates'
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+templates.env.globals["build_hash"] = settings.BUILD_HASH
 
 
 async def _get_user_context(request: Request, telegram_id: Optional[int]):

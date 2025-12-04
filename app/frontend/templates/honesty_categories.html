@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}Категории{% endblock %}
-{% block styles %}<link rel="stylesheet" href="/static/css/webapp.css?v=8">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="/static/css/webapp.css?v={{ build_hash }}">{% endblock %}
 {% block content %}
 <div class="page categories-page">
   <header class="page-header">
@@ -12,9 +12,9 @@
       <article class="category-card" data-id="{{ c.id }}" aria-label="{{ c.name }}">
         <div class="card-media">
           {% if c.image %}
-          <img src="{{ c.image }}" alt="{{ c.name }}" class="card-img" />
+          <img src="{{ c.image }}?v={{ build_hash }}" alt="{{ c.name }}" class="card-img" />
           {% else %}
-          <img src="/static/media/ref.jpg" alt="{{ c.name }}" class="card-img" />
+          <img src="/static/media/ref.jpg?v={{ build_hash }}" alt="{{ c.name }}" class="card-img" />
           {% endif %}
         </div>
         {% if c.is_premium or c.is_adult %}
@@ -39,7 +39,7 @@
 </div>
 {% endblock %}
 {% block scripts %}
-<script type="module" src="/static/js/haptics.js"></script>
-<script type="module" src="/static/js/auth.js"></script>
-<script type="module" src="/static/js/honesty_categories.js?v=7"></script>
+<script type="module" src="/static/js/haptics.js?v={{ build_hash }}"></script>
+<script type="module" src="/static/js/auth.js?v={{ build_hash }}"></script>
+<script type="module" src="/static/js/honesty_categories.js?v={{ build_hash }}"></script>
 {% endblock %}

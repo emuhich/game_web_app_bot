@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Игры{% endblock %}
 {% block styles %}
-<link rel="stylesheet" href="/static/css/webapp.css?v=9">
+<link rel="stylesheet" href="/static/css/webapp.css?v={{ build_hash }}">
 {% endblock %}
 {% block content %}
 <div class="page games-page">
@@ -13,9 +13,9 @@
       {% for g in games %}
       <article class="category-card game-card" data-code="{{ g.code }}" data-in-development="{{ '1' if g.in_development else '0' }}" aria-label="{{ g.title }}">
         {% if loop.first %}
-        <img src="/{{ g.image }}" alt="{{ g.title }}" class="card-img" loading="eager" fetchpriority="high" decoding="async" width="1600" height="900" />
+        <img src="/{{ g.image }}?v={{ build_hash }}" alt="{{ g.title }}" class="card-img" loading="eager" fetchpriority="high" decoding="async" width="1600" height="900" />
         {% else %}
-        <img src="/{{ g.image }}" alt="{{ g.title }}" class="card-img" loading="lazy" fetchpriority="low" decoding="async" width="1600" height="900" />
+        <img src="/{{ g.image }}?v={{ build_hash }}" alt="{{ g.title }}" class="card-img" loading="lazy" fetchpriority="low" decoding="async" width="1600" height="900" />
         {% endif %}
       </article>
       {% endfor %}
@@ -30,7 +30,7 @@
 </div>
 {% endblock %}
 {% block scripts %}
-<script type="module" src="/static/js/haptics.js"></script>
-<script type="module" src="/static/js/auth.js"></script>
-<script type="module" src="/static/js/index.js?v=4"></script>
+<script type="module" src="/static/js/haptics.js?v={{ build_hash }}"></script>
+<script type="module" src="/static/js/auth.js?v={{ build_hash }}"></script>
+<script type="module" src="/static/js/index.js?v={{ build_hash }}"></script>
 {% endblock %}
