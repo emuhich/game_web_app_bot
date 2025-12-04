@@ -2,10 +2,11 @@ import { haptics } from '/static/js/haptics.js';
 import { ensureAuth, getVerifiedId } from '/static/js/auth.js';
 import { showVpnBlockerPopup } from '/static/js/popups.js';
 
-const YOO_WIDGET_TIMEOUT_MS = 6000;
+const YOO_WIDGET_TIMEOUT_MS = 10000; // увеличили таймаут до 10с
 let vpnPopupShown = false;
 let yooWidgetTimeoutId = null;
 let yooWidgetPollId = null;
+let yooScriptLoaded = false;
 
 function showVpnNoticeOnce(onReload) {
   if (vpnPopupShown) return;
@@ -24,34 +25,44 @@ function clearYooWidgetWatchers() {
   }
 }
 
-function watchYooWidgetLoad() {
-  if (typeof window.YooMoneyCheckoutWidget === 'function') {
-    clearYooWidgetWatchers();
-    return;
-  }
-
-  const script = document.querySelector('script[src*="checkout-widget"]');
-  const handleReady = () => {
-    clearYooWidgetWatchers();
-  };
-
-  script?.addEventListener('load', handleReady, { once: true });
-  script?.addEventListener('error', () => {
-    clearYooWidgetWatchers();
-    showVpnNoticeOnce(() => window.location.reload());
-  }, { once: true });
-
-  yooWidgetTimeoutId = setTimeout(() => {
-    if (typeof window.YooMoneyCheckoutWidget !== 'function') {
-      showVpnNoticeOnce(() => window.location.reload());
-    }
-  }, YOO_WIDGET_TIMEOUT_MS);
-
-  yooWidgetPollId = setInterval(() => {
+function waitForWidget(timeoutMs = YOO_WIDGET_TIMEOUT_MS) {
+  return new Promise((resolve, reject) => {
+    // Уже доступен
     if (typeof window.YooMoneyCheckoutWidget === 'function') {
-      clearYooWidgetWatchers();
+      return resolve(true);
     }
-  }, 400);
+
+    const script = document.querySelector('script[src*="checkout-widget"]');
+    if (script) {
+      // Фиксируем факт загрузки скрипта браузером
+      script.addEventListener('load', () => { yooScriptLoaded = true; }, { once: true });
+      script.addEventListener('error', () => {
+        clearYooWidgetWatchers();
+        reject(new Error('Не удалось загрузить скрипт YooKassa'));
+      }, { once: true });
+    }
+
+    let elapsed = 0;
+    const step = 200;
+    yooWidgetPollId = setInterval(() => {
+      elapsed += step;
+      if (typeof window.YooMoneyCheckoutWidget === 'function') {
+        clearYooWidgetWatchers();
+        resolve(true);
+      } else if (elapsed >= timeoutMs) {
+        clearYooWidgetWatchers();
+        reject(new Error('Виджет YooKassa не появился в отведённое время'));
+      }
+    }, step);
+
+    yooWidgetTimeoutId = setTimeout(() => {
+      // Резервный таймер, если по какой-то причине setInterval не сработал
+      if (typeof window.YooMoneyCheckoutWidget !== 'function') {
+        clearYooWidgetWatchers();
+        reject(new Error('Таймаут ожидания виджета YooKassa'));
+      }
+    }, timeoutMs + 500);
+  });
 }
 
 async function refreshPremiumStatusUI() {
@@ -112,8 +123,10 @@ async function refreshPremiumStatusUI() {
 }
 
 async function startPayment(telegramId, durationDays) {
-  if (typeof window.YooMoneyCheckoutWidget !== 'function') {
-    console.error('YooMoneyCheckoutWidget не найден в window:', window.YooMoneyCheckoutWidget);
+  try {
+    await waitForWidget();
+  } catch (e) {
+    console.warn('[premium] YooMoneyCheckoutWidget недоступен:', e);
     showVpnNoticeOnce(() => window.location.reload());
     return;
   }
@@ -185,7 +198,17 @@ async function startPayment(telegramId, durationDays) {
 // Инициализация страницы премиума
 
 document.addEventListener('DOMContentLoaded', () => {
-  watchYooWidgetLoad();
+  // Наблюдаем за появлением виджета, но не мешаем клику
+  try {
+    const script = document.querySelector('script[src*="checkout-widget"]');
+    if (script) {
+      script.addEventListener('load', () => { yooScriptLoaded = true; }, { once: true });
+      script.addEventListener('error', () => {
+        console.error('[premium] Ошибка загрузки скрипта YooKassa');
+        showVpnNoticeOnce(() => window.location.reload());
+      }, { once: true });
+    }
+  } catch {}
 
   const buyBtn = document.getElementById('premium-buy');
   if (!buyBtn) return;
