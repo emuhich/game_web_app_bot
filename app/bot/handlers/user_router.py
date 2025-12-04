@@ -1,6 +1,6 @@
 from aiogram import Router, F
 from aiogram.filters import CommandStart, Command
-from aiogram.types import Message, LabeledPrice, SuccessfulPayment
+from aiogram.types import Message, LabeledPrice, SuccessfulPayment, PreCheckoutQuery
 
 from app.bot.utils.utils import greet_user
 from app.config import settings
@@ -37,23 +37,16 @@ async def cmd_test_stars(message: Message):
 
     Помогает проверить, что бот может выставлять инвойсы и что приходят successful_payment.
     """
-    prices = [LabeledPrice(label="Тестовая подписка", amount=1)]  # 1 звезда
-    try:
-        await message.answer_invoice(
-            title="Тестовый платёж (звёзды)",
-            description="Проверка оплаты Telegram Stars",
-            payload=f"test_stars_{message.from_user.id}",
-            provider_token=getattr(settings, "PAYMENTS_PROVIDER_TOKEN", ""),
-            currency="XTR",
-            prices=prices,
-        )
-    except Exception as e:
-        # логируем в личку админа и в чат
-        try:
-            await message.bot.send_message(settings.ADMIN_ID, f"Ошибка answer_invoice: {e}")
-        except Exception:
-            pass
-        await message.answer(f"Не удалось отправить тестовый инвойс: {e}")
+    await message.bot.send_invoice(
+        chat_id=message.chat.id,
+        title="Пополнение баланса",
+        description=f"10 монет",
+        provider_token="",  # если используете Telegram Stars, токен провайдера не требуется
+        currency="XTR",
+        prices=[LabeledPrice(label="1 звезда", amount=1)],  # список цен, amount указывается в минимальных единицах
+        payload=f"test_stars_{message.from_user.id}",
+        start_parameter="topup-stars"
+    )
 
 
 @user_router.message(F.successful_payment)
@@ -87,3 +80,19 @@ async def handle_successful_payment(message: Message) -> None:
             await message.answer("Не удалось активировать премиум. Попробуй позже.")
     elif payload.startswith("test_stars_"):
         await message.answer("Тестовый платёж в звёздах прошёл успешно! ✨")
+
+
+@user_router.pre_checkout_query()
+async def handle_pre_checkout_query(pcq: PreCheckoutQuery):
+    """Обязательный ответ на предварительный запрос оплаты.
+
+    Если не отвечать, платёж зависает на этапе подтверждения.
+    """
+    try:
+        await pcq.bot.answer_pre_checkout_query(pcq.id, ok=True)
+    except Exception:
+        # Попробуем сообщить пользователю, что что-то пошло не так
+        try:
+            await pcq.bot.send_message(pcq.from_user.id, "Не удалось подтвердить оплату. Попробуй ещё раз.")
+        except Exception:
+            pass
