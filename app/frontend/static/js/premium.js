@@ -195,6 +195,55 @@ async function startPayment(telegramId, durationDays) {
   checkout.render(containerId);
 }
 
+async function createStarsInvoice(amountStars, durationDays) {
+  const res = await fetch('/api/stars_invoice', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount: amountStars, duration_days: durationDays, description: `Премиум на ${durationDays} дней` }),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(txt || 'Не удалось создать инвойс Stars');
+  }
+  const data = await res.json();
+  return data.invoice_link;
+}
+
+function wireInvoiceClosedListener() {
+  const tg = window.Telegram?.WebApp;
+  try {
+    tg?.onEvent?.('invoiceClosed', async ({ status }) => {
+      if (status === 'paid') {
+        // Мгновенно прячем кнопку/действия, чтобы пользователь не видел «Купить»
+        const actionsEl = document.querySelector('.premium-actions');
+        const plansEl = document.querySelector('.premium-plans');
+        if (actionsEl) actionsEl.style.display = 'none';
+        if (plansEl) plansEl.style.display = 'none';
+        haptics?.notify?.('success');
+        // Обновляем статус премиума с сервера
+        await refreshPremiumStatusUI();
+      } else if (status === 'failed') {
+        haptics?.notify?.('error');
+      }
+    });
+  } catch {}
+}
+
+function getSelectedMethod() {
+  const active = document.querySelector('.payment-method.is-active');
+  return active?.dataset?.method || 'card';
+}
+
+function setupPaymentMethodButtons() {
+  const buttons = document.querySelectorAll('.payment-method');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+    });
+  });
+}
+
 // Инициализация страницы премиума
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -210,11 +259,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   } catch {}
 
+  setupPaymentMethodButtons();
+  wireInvoiceClosedListener();
+
   const buyBtn = document.getElementById('premium-buy');
   if (!buyBtn) return;
 
   buyBtn.addEventListener('click', async () => {
     try {
+      buyBtn.disabled = true; // предотвращаем повторные клики
       const auth = await ensureAuth();
       if (!auth?.ok) {
         alert('Не удалось авторизоваться через Telegram WebApp');
@@ -227,10 +280,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       const durationBtn = document.querySelector('.premium-plan.is-active');
       const durationDays = durationBtn ? durationBtn.dataset.duration : '365';
-      await startPayment(telegramId, durationDays);
+
+      const method = getSelectedMethod();
+      if (method === 'card') {
+        await startPayment(telegramId, durationDays);
+      } else if (method === 'stars') {
+        const tg = window.Telegram?.WebApp;
+        const invoiceLink = await createStarsInvoice(150, parseInt(durationDays, 10) || 365); // пример: 10 stars
+        tg?.openInvoice?.(invoiceLink);
+      }
     } catch (e) {
       console.error('[premium] Ошибка оплаты:', e);
       alert(e.message || 'Ошибка оплаты');
+    } finally {
+      buyBtn.disabled = false;
     }
   });
 

@@ -11,6 +11,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi_cache.decorator import cache
 from yookassa import Configuration, Payment
+import httpx
 
 from app.config import settings
 from app.exceptions import CategoryNotFoundException
@@ -280,3 +281,71 @@ async def webapp_auth(request: Request):
         "premium_active": bool(premium),
         "premium_expire_date": premium.expire_date.isoformat() if premium else None
     }}
+
+
+@router_webapp.post('/api/stars_invoice', response_class=JSONResponse)
+async def create_stars_invoice(request: Request):
+    """Создаёт ссылку на инвойс в Telegram Stars (currency=XTR) через Bot API createInvoiceLink.
+
+    Вход: { amount: int, description?: str, duration_days?: int }
+    amount — в звёздах (целое), будет умножено на 1000 для nanoStars.
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail='Некорректный JSON')
+
+    # Авторизация по сессии
+    try:
+        sid = request.session.get('telegram_id')
+        telegram_id = int(sid) if sid else None
+    except Exception:
+        telegram_id = None
+    if not telegram_id:
+        raise HTTPException(status_code=401, detail='Not authenticated')
+
+    amount_stars = int(data.get('amount') or 0)
+    if amount_stars <= 0:
+        raise HTTPException(status_code=400, detail='amount должен быть > 0')
+
+    # Описание и метаданные
+    duration_days = int(data.get('duration_days') or 365)
+    description = data.get('description') or f'Премиум на {duration_days} дней'
+
+    if not settings.BOT_TOKEN:
+        raise HTTPException(status_code=500, detail='BOT_TOKEN не сконфигурирован')
+
+    payload = f'stars_payment_premium_{telegram_id}_{duration_days}'
+
+    # Формируем запрос к Telegram Bot API
+    url = f'https://api.telegram.org/bot{settings.BOT_TOKEN}/createInvoiceLink'
+    body = {
+        'title': description,
+        'description': description,
+        'payload': payload,
+        'provider_token': '',  # для Stars — пустой
+        'currency': 'XTR',
+        'prices': [
+            {
+                'label': description,
+                'amount': amount_stars,
+            }
+        ],
+    }
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        try:
+            resp = await client.post(url, json=body)
+        except httpx.HTTPError as e:
+            raise HTTPException(status_code=502, detail=f'Telegram API error: {e}')
+
+    if resp.status_code != 200:
+        raise HTTPException(status_code=resp.status_code, detail=resp.text)
+
+    payload_json = resp.json()
+    if not payload_json.get('ok'):
+        raise HTTPException(status_code=502, detail=str(payload_json))
+
+    invoice_link = payload_json['result']
+    return {'invoice_link': invoice_link}
+

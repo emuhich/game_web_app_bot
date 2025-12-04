@@ -31,53 +31,32 @@ async def cmd_start(message: Message) -> None:
     await greet_user(message, is_new_user=is_new_user)
 
 
-@user_router.message(Command("test_stars"))
-async def cmd_test_stars(message: Message):
-    """Тестовый платёж в Telegram Stars: счёт на 1 звезду.
-
-    Помогает проверить, что бот может выставлять инвойсы и что приходят successful_payment.
-    """
-    await message.bot.send_invoice(
-        chat_id=message.chat.id,
-        title="Пополнение баланса",
-        description=f"10 монет",
-        provider_token="",  # если используете Telegram Stars, токен провайдера не требуется
-        currency="XTR",
-        prices=[LabeledPrice(label="1 звезда", amount=1)],  # список цен, amount указывается в минимальных единицах
-        payload=f"test_stars_{message.from_user.id}",
-        start_parameter="topup-stars"
-    )
-
-
 @user_router.message(F.successful_payment)
 async def handle_successful_payment(message: Message) -> None:
     """Логируем успешный платёж и тестово активируем премиум, если payload от премиум-инвойса."""
     sp: SuccessfulPayment = message.successful_payment
     payload = sp.invoice_payload or ""
 
-    # Лог в чат админа, чтобы видеть, что вообще что-то приходит
-    try:
-        await message.bot.send_message(
-            settings.ADMIN_ID,
-            f"successful_payment от {message.from_user.id}: payload={payload}, currency={sp.currency}, total={sp.total_amount}",
-        )
-    except Exception:
-        pass
-
-    if payload.startswith("premium_year_"):
-        try:
-            telegram_id = int(payload.split("premium_year_")[-1])
-        except ValueError:
+    # Оплата премиума через классический провайдер (например, YooKassa) — payload начинается с premium_year_
+    if payload.startswith("stars_payment_premium_"):
+        parts = payload.split("_")
+        # ['stars', 'payment', 'premium', '{telegram_id}', '{duration_days}']
+        if len(parts) >= 5 and sp.currency == "XTR":
+            try:
+                telegram_id = int(parts[3])
+                duration_days = int(parts[4])
+            except ValueError:
+                return
+            try:
+                await UserService.extend_premium(telegram_id=telegram_id, duration_days=duration_days)
+                await message.answer("Премиум по оплате в Stars активирован! ✨")
+            except PremiumDurationInvalidException:
+                await message.answer("Не удалось активировать премиум: некорректный период.")
+            except Exception:
+                await message.answer("Не удалось активировать премиум. Попробуй позже.")
+        else:
+            # Неверная валюта или формат payload — игнор
             return
-
-        duration_days = 365
-        try:
-            await UserService.extend_premium(telegram_id=telegram_id, duration_days=duration_days)
-            await message.answer("Премиум успешно активирован! 🎉 Можешь вернуться в игру.")
-        except PremiumDurationInvalidException:
-            await message.answer("Не удалось активировать премиум: некорректный период.")
-        except Exception:
-            await message.answer("Не удалось активировать премиум. Попробуй позже.")
     elif payload.startswith("test_stars_"):
         await message.answer("Тестовый платёж в звёздах прошёл успешно! ✨")
 
@@ -91,7 +70,6 @@ async def handle_pre_checkout_query(pcq: PreCheckoutQuery):
     try:
         await pcq.bot.answer_pre_checkout_query(pcq.id, ok=True)
     except Exception:
-        # Попробуем сообщить пользователю, что что-то пошло не так
         try:
             await pcq.bot.send_message(pcq.from_user.id, "Не удалось подтвердить оплату. Попробуй ещё раз.")
         except Exception:

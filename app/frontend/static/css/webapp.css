@@ -891,6 +891,9 @@ body {
 
 .premium-actions {
   margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .premium-status {
@@ -990,4 +993,56 @@ body {
   font-size: 14px;
   color: rgba(255,255,255,0.85);
   margin: 0;
+}
+
+/* Payment methods selector */
+.payment-methods {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  margin: 12px 0 16px;
+}
+.payment-methods .payment-method {
+  appearance: none;
+  border: 1px solid rgba(0,0,0,0.1);
+  background: var(--tg-theme-bg-color, #fff);
+  color: var(--tg-theme-text-color, #111);
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 15px;
+  line-height: 1.2;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: all .15s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.payment-methods .payment-method:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
+.payment-methods .payment-method:focus-visible {
+  outline: 2px solid var(--tg-theme-button-color, #2ea6ff);
+  outline-offset: 2px;
+}
+.payment-methods .payment-method.is-active,
+.payment-methods .payment-method[aria-selected="true"] {
+  background: var(--tg-theme-bg-color, #fff); /* убрали синюю заливку */
+  color: var(--tg-theme-text-color, #111);
+  border-color: rgba(255,255,255,0.85); /* белая обводка, как у карточек */
+  outline: 3px solid rgba(255,255,255,0.85);
+  outline-offset: -3px;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.35), 0 2px 8px rgba(0,0,0,0.10);
+}
+.payment-methods .payment-method.is-active:hover {
+  transform: none; /* активная не подпрыгивает */
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.35), 0 2px 8px rgba(0,0,0,0.10);
+}
+/* Place methods container nicely inside premium-actions */
+.premium-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
