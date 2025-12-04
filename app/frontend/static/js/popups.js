@@ -97,10 +97,15 @@ export function showPremiumPopup(onBuy) {
 }
 
 export function showVpnBlockerPopup(onReload) {
+    // Глобальный защитный флаг, чтобы попап показывался только один раз во всём приложении
+    if (typeof window !== 'undefined') {
+        if (window.__vpnPopupShown) return;
+        window.__vpnPopupShown = true;
+    }
+
     try {
         haptics.impact('light');
-    } catch {
-    }
+    } catch {}
 
     const overlay = document.createElement('div');
     overlay.className = 'premium-popup-overlay vpn-popup-overlay';
@@ -122,16 +127,16 @@ export function showVpnBlockerPopup(onReload) {
         setTimeout(() => overlay.remove(), 220);
     };
 
-    closeBtn?.addEventListener('click', close);
+    closeBtn?.addEventListener('click', () => {
+        try { haptics.impact('light'); } catch {}
+        close();
+    });
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) close();
     });
 
     refreshBtn?.addEventListener('click', () => {
-        try {
-            haptics.impact('medium');
-        } catch {
-        }
+        try { haptics.impact('medium'); } catch {}
         close();
         if (typeof onReload === 'function') {
             onReload();
@@ -139,4 +144,9 @@ export function showVpnBlockerPopup(onReload) {
             window.location.reload();
         }
     });
+}
+
+// Делаем функцию доступной глобально, чтобы её можно было вызывать из inline-скриптов шаблонов
+if (typeof window !== 'undefined') {
+    window.showVpnBlockerPopup = showVpnBlockerPopup;
 }

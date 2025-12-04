@@ -2,7 +2,7 @@ import { haptics } from '/static/js/haptics.js';
 import { ensureAuth, getVerifiedId } from '/static/js/auth.js';
 import { showVpnBlockerPopup } from '/static/js/popups.js';
 
-const YOO_WIDGET_TIMEOUT_MS = 10000; // увеличили таймаут до 10с
+const YOO_WIDGET_TIMEOUT_MS = 5000; // увеличили таймаут до 10с
 let vpnPopupShown = false;
 let yooWidgetTimeoutId = null;
 let yooWidgetPollId = null;

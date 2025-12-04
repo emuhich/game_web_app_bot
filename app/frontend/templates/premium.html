@@ -61,6 +61,31 @@
 </div>
 {% endblock %}
 {% block scripts %}
-  <script src="https://yookassa.ru/checkout-widget/v1/checkout-widget.js"></script>
+  <script type="module" src="/static/js/popups.js?v={{ build_hash }}"></script>
+  <script id="yoo-widget-script" src="https://yookassa.ru/checkout-widget/v1/checkout-widget.js" async></script>
+  <script>
+    (function(){
+      var timeoutMs = 10000;
+      var s = document.getElementById('yoo-widget-script');
+      function show(){
+        if (typeof window.showVpnBlockerPopup === 'function') {
+          window.showVpnBlockerPopup(function(){ window.location.reload(); });
+        }
+      }
+      if (s) {
+        s.addEventListener('error', function(){ show(); }, { once: true });
+      }
+      var waited = 0, step = 200;
+      var pollId = setInterval(function(){
+        waited += step;
+        if (typeof window.YooMoneyCheckoutWidget === 'function') {
+          clearInterval(pollId);
+        } else if (waited >= timeoutMs) {
+          clearInterval(pollId);
+          show();
+        }
+      }, step);
+    })();
+  </script>
   <script type="module" src="/static/js/premium.js?v={{ build_hash }}"></script>
 {% endblock %}
