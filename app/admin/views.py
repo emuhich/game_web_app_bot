@@ -13,7 +13,6 @@ from app.db.models.honesty import HonCategory, HonQuestion
 from app.db.models.admin import Admin as AdminModel
 from app.config import settings
 from markupsafe import Markup
-# добавляем импорты для кастомного дашборда
 from sqladmin import BaseView, expose
 from starlette.templating import Jinja2Templates
 from pathlib import Path
@@ -89,7 +88,6 @@ class AdminUserAdmin(ModelView, model=AdminModel):
         return await super().update_model(request, pk, data)
 
 
-# --- Вьюхи ---
 class UserAdmin(ModelView, model=User):
     name = "Пользователь"
     name_plural = "Пользователи"
@@ -133,7 +131,6 @@ class HonCategoryAdmin(ModelView, model=HonCategory):
         HonCategory.image,
         "image_preview",
     )
-    # показываем превью картинки в списке и на detail‑странице
     column_formatters = {
         "image_preview": category_image_preview_formatter,
     }
@@ -174,7 +171,6 @@ class HonCategoryAdmin(ModelView, model=HonCategory):
         from wtforms import FileField
         from wtforms.validators import Optional as OptionalValidator
         form_class = await super().scaffold_form(form_rules)
-        # поле для загрузки новой картинки
         form_class.upload_image = FileField("Новое изображение категории", validators=[OptionalValidator()])
         return form_class
 
@@ -276,7 +272,6 @@ class DashboardRoot(BaseView):
     name = "Обзор"
     icon = "fas fa-chart-line"
 
-    # Рендер из общей папки шаблонов фронта
     _templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / 'frontend' / 'templates'))
 
     @expose("/")

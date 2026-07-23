@@ -105,7 +105,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (vid) params.push(`telegram_id=${vid}`);
     const url = base + (params.length ? `?${params.join('&')}` : '');
 
-    // сначала пробуем запросить доступ к вопросам через API
     try {
       const res = await fetch(url, { method: 'GET' });
       if (res.status === 402) {

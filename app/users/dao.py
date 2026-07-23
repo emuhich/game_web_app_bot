@@ -64,7 +64,6 @@ class UserDAO(BaseDAO):
             )
             return result.scalars().all()
 
-    # ---------------- Premium -----------------
     @classmethod
     async def get_active_premium(cls, telegram_id: int) -> Optional[Premium]:
         today = date.today()

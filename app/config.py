@@ -22,7 +22,6 @@ class Settings(BaseSettings):
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     CACHE_TIMEOUT: int = 30
-    # Добавлены недостающие ключи для админ-панели/auth
     ADMIN_SECRET: str = "supersecretkey_change_me"
     ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str = "admin123"
@@ -39,11 +38,11 @@ class Settings(BaseSettings):
     BUILD_HASH: str = Field(default_factory=lambda: datetime.utcnow().strftime('%Y%m%d%H%M%S'))
 
     # Логирование
-    LOG_LEVEL: str = "INFO"          # Базовый уровень логирования
+    LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-    LOG_DIR: Path = Path("logs")     # Каталог для логов внутри проекта/контейнера
-    LOG_TO_CONSOLE: bool = True       # Логировать ли в stdout
-    LOG_TO_FILE: bool = True          # Логировать ли в файлы
+    LOG_DIR: Path = Path("logs")
+    LOG_TO_CONSOLE: bool = True
+    LOG_TO_FILE: bool = True
 
     # Path constants
     APP_DIR: Path = Path(__file__).resolve().parent  # /app

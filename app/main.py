@@ -32,11 +32,9 @@ def setup_logging() -> None:
     log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
     log_format = settings.LOG_FORMAT
 
-    # Глобальный логгер
     logger = logging.getLogger()
     logger.setLevel(log_level)
 
-    # Удаляем все старые хендлеры, если они уже были настроены
     for h in list(logger.handlers):
         logger.removeHandler(h)
 
@@ -49,7 +47,6 @@ def setup_logging() -> None:
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
-    # Логирование в файл с ротацией
     if settings.LOG_TO_FILE:
         try:
             log_dir = settings.LOG_DIR
@@ -64,12 +61,10 @@ def setup_logging() -> None:
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
         except Exception as e:
-            # Если по каким-то причинам нельзя писать в файл, не падаем, а просто логируем в консоль
             logging.basicConfig(level=log_level, format=log_format)
             logging.getLogger(__name__).warning("Не удалось настроить файловый логгер: %s", e)
 
 
-# Настраиваем логирование до создания приложения
 setup_logging()
 logger = logging.getLogger(__name__)
 
@@ -77,9 +72,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting bot & cache setup...")
-    # Подключаем роутеры бота
     dp.include_router(user_router)
-    # Стартуем бота
     await start_bot()
     webhook_url = settings.get_webhook_url()
     await bot.set_webhook(url=webhook_url,
@@ -94,9 +87,7 @@ async def lifespan(app: FastAPI):
         redis = await redis_async.from_url(settings.REDIS_URL, encoding="utf8", decode_responses=True)
         FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
         logger.info("FastAPI cache initialized with Redis backend")
-    # Переходим к работе приложения
     yield
-    # Завершение: удаляем вебхук и останавливаем бота
     logger.info("Shutting down bot...")
     await bot.delete_webhook()
     await stop_bot()

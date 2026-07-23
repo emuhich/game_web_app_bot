@@ -2,7 +2,7 @@ import { haptics } from '/static/js/haptics.js';
 import { ensureAuth, getVerifiedId } from '/static/js/auth.js';
 import { showVpnBlockerPopup } from '/static/js/popups.js';
 
-const YOO_WIDGET_TIMEOUT_MS = 5000; // увеличили таймаут до 10с
+const YOO_WIDGET_TIMEOUT_MS = 5000;
 let vpnPopupShown = false;
 let yooWidgetTimeoutId = null;
 let yooWidgetPollId = null;
@@ -27,14 +27,12 @@ function clearYooWidgetWatchers() {
 
 function waitForWidget(timeoutMs = YOO_WIDGET_TIMEOUT_MS) {
   return new Promise((resolve, reject) => {
-    // Уже доступен
     if (typeof window.YooMoneyCheckoutWidget === 'function') {
       return resolve(true);
     }
 
     const script = document.querySelector('script[src*="checkout-widget"]');
     if (script) {
-      // Фиксируем факт загрузки скрипта браузером
       script.addEventListener('load', () => { yooScriptLoaded = true; }, { once: true });
       script.addEventListener('error', () => {
         clearYooWidgetWatchers();
@@ -220,7 +218,6 @@ function wireInvoiceClosedListener() {
         if (actionsEl) actionsEl.style.display = 'none';
         if (plansEl) plansEl.style.display = 'none';
         haptics?.notify?.('success');
-        // Обновляем статус премиума с сервера
         await refreshPremiumStatusUI();
       } else if (status === 'failed') {
         haptics?.notify?.('error');
@@ -244,7 +241,6 @@ function setupPaymentMethodButtons() {
   });
 }
 
-// Инициализация страницы премиума
 
 document.addEventListener('DOMContentLoaded', () => {
   // Наблюдаем за появлением виджета, но не мешаем клику
@@ -267,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   buyBtn.addEventListener('click', async () => {
     try {
-      buyBtn.disabled = true; // предотвращаем повторные клики
+      buyBtn.disabled = true;
       const auth = await ensureAuth();
       if (!auth?.ok) {
         alert('Не удалось авторизоваться через Telegram WebApp');
@@ -286,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
         await startPayment(telegramId, durationDays);
       } else if (method === 'stars') {
         const tg = window.Telegram?.WebApp;
-        const invoiceLink = await createStarsInvoice(150, parseInt(durationDays, 10) || 365); // пример: 10 stars
+        const invoiceLink = await createStarsInvoice(150, parseInt(durationDays, 10) || 365);
         tg?.openInvoice?.(invoiceLink);
       }
     } catch (e) {
@@ -297,6 +293,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // При заходе на страницу сразу обновим UI премиума по статусу
   refreshPremiumStatusUI();
 });

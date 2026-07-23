@@ -17,7 +17,6 @@ class HonestyService:
 
     @staticmethod
     async def get_questions(category_id: int):
-        # убеждаемся что категория существует
         await HonestyService.get_category_or_raise(category_id)
         return await HonQuestionDAO.get_by_category(category_id)
 

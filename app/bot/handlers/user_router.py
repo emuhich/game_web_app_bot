@@ -21,7 +21,6 @@ async def cmd_start(message: Message) -> None:
         is_new_user = False
         user = existing
     else:
-        # Создаём пользователя если не найден
         user = await UserDAO.get_or_create(
             telegram_id=message.from_user.id,
             first_name=message.from_user.first_name,

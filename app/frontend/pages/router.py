@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import hmac
 import random
 import uuid
@@ -182,8 +183,7 @@ async def yookassa_webhook(request: Request):
             try:
                 await UserService.extend_premium(telegram_id=int(telegram_id), duration_days=duration_days)
             except Exception:
-                # логика логирования/алертов
-                pass
+                logging.getLogger(__name__).exception("Не удалось продлить премиум после оплаты")
 
     return {"ok": True}
 
@@ -217,7 +217,6 @@ async def honesty_play(
     return templates.TemplateResponse('honesty_play.html', {"request": request, "category": category, "questions": questions, **ctx})
 
 
-# Безопасная авторизация: принимаем initData строкой, валидируем подпись и TTL, кладем telegram_id в сессию
 @router_webapp.post('/api/auth', response_class=JSONResponse)
 async def webapp_auth(request: Request):
     data = await request.json()
@@ -227,9 +226,7 @@ async def webapp_auth(request: Request):
     if not settings.BOT_TOKEN:
         raise HTTPException(status_code=500, detail='BOT_TOKEN not configured')
 
-    # Парсим строку initData как query string
     params = parse_qs(init_data, keep_blank_values=True)
-    # Извлекаем hash и auth_date
     hash_values = params.get('hash', [])
     auth_values = params.get('auth_date', [])
     if not hash_values or not auth_values:
@@ -295,7 +292,6 @@ async def create_stars_invoice(request: Request):
     except Exception:
         raise HTTPException(status_code=400, detail='Некорректный JSON')
 
-    # Авторизация по сессии
     try:
         sid = request.session.get('telegram_id')
         telegram_id = int(sid) if sid else None
